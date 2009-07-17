@@ -102,6 +102,14 @@ class Asset < ActiveRecord::Base
       thumbnail_sizes.keys
     end
     
+    # this is just a pointer that can be alias-chained in other extensions to add to or replace the list of thumbnail mechanisms
+    # its invocation is delayed with a lambda in has_attached_file so that it isn't called when the extension loads, but when an attachment initializes:
+    # that way we can be sure that all the related extensions have loaded and all the alias_chains are in place.
+    
+    def thumbnail_definitions
+      thumbnail_sizes
+    end
+
     private
       def additional_thumbnails
         Radiant::Config["assets.additional_thumbnails"].gsub(' ','').split(',').collect{|s| s.split('=')}.inject({}) {|ha, (k, v)| ha[k.to_sym] = v; ha}
@@ -111,7 +119,8 @@ class Asset < ActiveRecord::Base
   # order_by 'title'
     
   has_attached_file :asset,
-                    :styles => thumbnail_sizes,
+                    :processors => lambda {|instance| instance.choose_processors },   # this allows us to set processors per file type, and to add more in other extensions
+                    :styles => lambda { thumbnail_definitions },                      # and this lets extensions add thumbnailers (and also usefully defers the call)
                     :whiny_thumbnails => false,
                     :storage => Radiant::Config["assets.storage"] == "s3" ? :s3 : :filesystem, 
                     :s3_credentials => {
@@ -160,6 +169,14 @@ class Asset < ActiveRecord::Base
     end
   end
   
+  # this has been added to support other extensions that want to add processors 
+  # eg paperclipped_gps uses gpsbabel in the same way as paperclipped uses imagemagick
+  # I also mean to add a video thumbnailer using ffmpeg 
+  
+  def choose_processors
+    [:thumbnail]
+  end
+
   def basename
     File.basename(asset_file_name, ".*") if asset_file_name
   end
