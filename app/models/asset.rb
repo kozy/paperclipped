@@ -1,45 +1,43 @@
 require 'mime_type_ext'
 
 class Asset < ActiveRecord::Base
-  Mime::Type.register 'image/png', :image, %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif]
-  Mime::Type.register 'video/mpeg', :video, %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
-  Mime::Type.register 'audio/mpeg', :audio, %w[audio/mpeg audio/ogg application/ogg audio/x-ms-wma audio/vnd.rn-realaudio audio/x-wav]
-  Mime::Type.register 'application/x-shockwave-flash', :swf
-  Mime::Type.register 'application/pdf', :pdf
-  # A “movie” can be a swf or a video file (retained for back-compat)
-  Mime::Type.register Mime::SWF.to_s, :movie, Mime::VIDEO.all_types
+  @@known_types = []
+  cattr_accessor :known_types
   
-  def self.known_types
-    [:image, :video, :audio, :swf, :pdf, :movie]
-  end  
-
-  class << self
-    Asset.known_types.each do |type|
-      define_method "#{type}?" do |asset_content_type|
-        Mime::Type.lookup_by_extension(type.to_s) == asset_content_type.to_s
-      end
-
-      define_method "#{type}_condition" do
-        types = Mime::Type.lookup_by_extension(type.to_s).all_types
-        # use #send due to a ruby 1.8.2 issue
-        send(:sanitize_sql, ['asset_content_type IN (?)', types])
-      end
-    end
+  # type declarations are consolidated here so that other extensions can add more
+  # see register_type() calls in the main class definition below
+  
+  def self.register_type(type, mimes)
+    Mime::Type.register mimes.shift, type, mimes
     
-    def other?(asset_content_type)
-      !known_types.any? { |type| send("#{type}?", asset_content_type) }
+    self.class.send :define_method, "#{type}?" do |asset_content_type|
+      Mime::Type.lookup_by_extension(type.to_s) == asset_content_type.to_s
     end
-    
-    def other_condition
-      excluded_types = Mime::IMAGE.all_types + Mime::AUDIO.all_types + Mime::MOVIE.all_types
+
+    self.class.send :define_method, "#{type}_condition" do
+      types = Mime::Type.lookup_by_extension(type.to_s).all_types
       # use #send due to a ruby 1.8.2 issue
-      send(:sanitize_sql, ['asset_content_type NOT IN (?)', excluded_types])
-    end    
-  end
-  (known_types + [:other]).each do |type|
+      send(:sanitize_sql, ['asset_content_type IN (?)', types])
+    end
+    
     named_scope type.to_s.pluralize.intern, :conditions => self.send("#{type}_condition".intern)
+    known_types.push(type)
+  end
+        
+  def self.other?(asset_content_type)
+    !self.mime_types_not_considered_other.include? asset_content_type.to_s
   end
   
+  def self.other_condition
+    # use #send due to a ruby 1.8.2 issue
+    send(:sanitize_sql, ['asset_content_type NOT IN (?)', self.mime_types_not_considered_other])
+  end
+  
+  # this is made separate so that it can be overridden or alias_chained
+  def self.mime_types_not_considered_other
+    Mime::IMAGE.all_types + Mime::AUDIO.all_types + Mime::MOVIE.all_types  
+  end
+    
   class << self
     def search(search, filter, page)
       unless search.blank?
@@ -117,7 +115,7 @@ class Asset < ActiveRecord::Base
   end
   
   # order_by 'title'
-    
+
   has_attached_file :asset,
                     :processors => lambda {|instance| instance.choose_processors },   # this allows us to set processors per file type, and to add more in other extensions
                     :styles => lambda { thumbnail_definitions },                      # and this lets extensions add thumbnailers (and also usefully defers the call)
@@ -144,7 +142,21 @@ class Asset < ActiveRecord::Base
     :less_than => Radiant::Config["assets.max_asset_size"].to_i.megabytes if Radiant::Config.table_exists? && Radiant::Config["assets.max_asset_size"]
     
   before_save :assign_title
-    
+  
+  register_type :image, %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif]
+  register_type :video, %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
+  register_type :audio, %w[audio/mpeg audio/ogg application/ogg audio/x-ms-wma audio/vnd.rn-realaudio audio/x-wav]
+  register_type :swf, %w[application/x-shockwave-flash]
+  register_type :pdf, %w[application/pdf]
+
+  # alias for backwards-compatibility: movie can be video or swf
+  register_type :movie, Mime::SWF.all_types + Mime::VIDEO.all_types
+
+  # 'others' are anything that is not image, video, audio or swf
+  # the lambda is just a precaution: it delays interpolation. 
+  
+  named_scope :others, lambda {{:conditions => self.other_condition}}
+  
   def thumbnail(size='original')
     return asset.url if size == 'original'
     case 
