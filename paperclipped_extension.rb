@@ -27,16 +27,17 @@ class PaperclippedExtension < Radiant::Extension
   end
   
   def activate
-    
-    Radiant::AdminUI.send :include, AssetsAdminUI unless defined? admin.asset # UI is a singleton and already loaded
-    admin.asset = Radiant::AdminUI.load_default_asset_regions
+    unless defined? admin.asset # UI is a singleton and already loaded
+      Radiant::AdminUI.send :include, AssetsAdminUI
+      admin.asset = Radiant::AdminUI.load_default_asset_regions
 
-    %w{page}.each do |view|
-      admin.send(view).edit.add :main, "/admin/assets/show_bucket_link", :before => "edit_header"
-      admin.send(view).edit.add :main, "/admin/assets/assets_bucket", :after => "edit_buttons"
-      admin.send(view).edit.asset_tabs.concat %w{attachment_tab upload_tab bucket_tab search_tab}
-      admin.send(view).edit.bucket_pane.concat %w{bucket_notes bucket bucket_bottom}
-      admin.send(view).edit.asset_panes.concat %w{page_attachments upload search}
+      %w{page}.each do |view|
+        admin.send(view).edit.add :main, "/admin/assets/show_bucket_link", :before => "edit_header"
+        admin.send(view).edit.add :main, "/admin/assets/assets_bucket", :after => "edit_buttons"
+        admin.send(view).edit.asset_tabs.concat %w{attachment_tab upload_tab bucket_tab search_tab}
+        admin.send(view).edit.bucket_pane.concat %w{bucket_notes bucket bucket_bottom}
+        admin.send(view).edit.asset_panes.concat %w{page_attachments upload search}
+      end
     end
     
     Page.class_eval {

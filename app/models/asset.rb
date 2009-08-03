@@ -4,11 +4,12 @@ class Asset < ActiveRecord::Base
   @@known_types = []
   cattr_accessor :known_types
   
-  # type declarations are consolidated here so that other extensions can add more
-  # see register_type() calls in the main class definition below
+  # type declarations are consolidated here so that other extensions can add more types
+  # for example: Asset.register_type(:gps, %w{application/gpx+xml application/tcx+xml})
+  # the main Asset register_type() calls are in the class definition below after validation
   
   def self.register_type(type, mimes)
-    Mime::Type.register mimes.shift, type, mimes
+    Mime::Type.register mimes.shift, type, mimes                                # Mime::Type.register 'image/png', :image, %w[image/x-png image/jpeg image/pjpeg image/jpg image/gif]
     
     self.class.send :define_method, "#{type}?" do |asset_content_type|
       Mime::Type.lookup_by_extension(type.to_s) == asset_content_type.to_s
@@ -19,8 +20,14 @@ class Asset < ActiveRecord::Base
       # use #send due to a ruby 1.8.2 issue
       send(:sanitize_sql, ['asset_content_type IN (?)', types])
     end
+
+    self.class.send :define_method, "not_#{type}_condition" do
+      types = Mime::Type.lookup_by_extension(type.to_s).all_types
+      send(:sanitize_sql, ['NOT asset_content_type IN (?)', types])
+    end
     
     named_scope type.to_s.pluralize.intern, :conditions => self.send("#{type}_condition".intern)
+    named_scope "not_#{type.to_s.pluralize}".intern, :conditions => self.send("not_#{type}_condition".intern)
     known_types.push(type)
   end
         
@@ -33,7 +40,7 @@ class Asset < ActiveRecord::Base
     send(:sanitize_sql, ['asset_content_type NOT IN (?)', self.mime_types_not_considered_other])
   end
   
-  # this is made separate so that it can be overridden or alias_chained
+  # this is made separate for consistency and so that it can be overridden or alias_chained
   def self.mime_types_not_considered_other
     Mime::IMAGE.all_types + Mime::AUDIO.all_types + Mime::MOVIE.all_types  
   end
@@ -153,7 +160,7 @@ class Asset < ActiveRecord::Base
   register_type :movie, Mime::SWF.all_types + Mime::VIDEO.all_types
 
   # 'others' are anything that is not image, video, audio or swf
-  # the lambda is just a precaution: it delays interpolation. 
+  # the lambda delays interpolation, allowing extensions to change the 'other' conduition
   
   named_scope :others, lambda {{:conditions => self.other_condition}}
   

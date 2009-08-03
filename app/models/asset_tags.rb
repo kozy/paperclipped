@@ -146,6 +146,29 @@ module AssetTags
     tag.expand unless asset_content_type.match(regexp).nil?
   end
   
+  Asset.known_types.each do |type|
+    desc %{
+      Renders the contained elements only if the asset is of the specified type.
+
+      *Usage:* 
+      <pre><code><r:assets:if_#{type}>...</r:assets:if_#{type}></code></pre>
+    }
+    tag "assets:if_#{type}" do |tag|
+      tag.expand if tag.locals.asset.send("#{type}?".intern)
+    end
+
+    desc %{
+      Renders the contained elements only if the asset is not of the specified type.
+
+      *Usage:* 
+      <pre><code><r:assets:unless_#{type}>...</r:assets:unless_#{type}></code></pre>
+    }
+    tag "assets:unless_#{type}" do |tag|
+      tag.expand unless tag.locals.asset.send("#{type}?".intern)
+    end
+
+  end
+  
   [:title, :caption, :asset_file_name, :asset_content_type, :asset_file_size, :id].each do |method|
     desc %{
       Renders the `#{method.to_s}' attribute of the asset.     
@@ -230,10 +253,11 @@ module AssetTags
   end
   
   tag 'assets:thumbnail' do |tag|
-    options = tag.attr.dup
-    asset = find_asset(tag, options)
-    asset.generate_thumbnail('test', ['24x24#',nil])
-    asset.save    
+    tag.render('assets:url', tag.attr.dup.merge('size' => 'thumbnail'))
+  end
+
+  tag 'assets:icon' do |tag|
+    tag.render('assets:url', tag.attr.dup.merge('size' => 'icon'))
   end
   
   desc %{
