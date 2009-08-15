@@ -4,24 +4,27 @@ class Asset < ActiveRecord::Base
   @@known_types = []
   cattr_accessor :known_types
   
-  # type declarations are consolidated here so that other extensions can add more types
+  # type declaration machinery is consolidated here so that other extensions can add more types
   # for example: Asset.register_type(:gps, %w{application/gpx+xml application/tcx+xml})
   # the main Asset register_type() calls are in the class definition below after validation
   
   def self.register_type(type, mimes)
-    Mime::Type.register mimes.shift, type, mimes                                # Mime::Type.register 'image/png', :image, %w[image/x-png image/jpeg image/pjpeg image/jpg image/gif]
+    Mime::Type.register mimes.shift, type, mimes       # Mime::Type.register 'image/png', :image, %w[image/x-png image/jpeg image/pjpeg image/jpg image/gif]
+
+    self.class.send :define_method, "#{type}?".intern do |content_type|
+      Mime::Type.lookup_by_extension(type.to_s) == content_type.to_s
+    end
     
-    self.class.send :define_method, "#{type}?" do |asset_content_type|
-      Mime::Type.lookup_by_extension(type.to_s) == asset_content_type.to_s
+    define_method "#{type}?".intern do
+      self.class.send "#{type}?".intern, asset_content_type
     end
 
-    self.class.send :define_method, "#{type}_condition" do
+    self.class.send :define_method, "#{type}_condition".intern do
       types = Mime::Type.lookup_by_extension(type.to_s).all_types
-      # use #send due to a ruby 1.8.2 issue
       send(:sanitize_sql, ['asset_content_type IN (?)', types])
     end
 
-    self.class.send :define_method, "not_#{type}_condition" do
+    self.class.send :define_method, "not_#{type}_condition".intern do
       types = Mime::Type.lookup_by_extension(type.to_s).all_types
       send(:sanitize_sql, ['NOT asset_content_type IN (?)', types])
     end
@@ -31,8 +34,12 @@ class Asset < ActiveRecord::Base
     known_types.push(type)
   end
         
-  def self.other?(asset_content_type)
-    !self.mime_types_not_considered_other.include? asset_content_type.to_s
+  def other?
+    self.class.other?(asset_content_type)
+  end
+
+  def self.other?(content_type)
+    !self.mime_types_not_considered_other.include? content_type.to_s
   end
   
   def self.other_condition
@@ -40,7 +47,7 @@ class Asset < ActiveRecord::Base
     send(:sanitize_sql, ['asset_content_type NOT IN (?)', self.mime_types_not_considered_other])
   end
   
-  # this is made separate for consistency and so that it can be overridden or alias_chained
+  # this is made separate for greater consistency and so that it can be overridden or alias_chained
   def self.mime_types_not_considered_other
     Mime::IMAGE.all_types + Mime::AUDIO.all_types + Mime::MOVIE.all_types  
   end
@@ -115,10 +122,10 @@ class Asset < ActiveRecord::Base
       thumbnail_sizes
     end
 
-    private
-      def additional_thumbnails
-        Radiant::Config["assets.additional_thumbnails"].gsub(' ','').split(',').collect{|s| s.split('=')}.inject({}) {|ha, (k, v)| ha[k.to_sym] = v; ha}
-      end
+  private
+    def additional_thumbnails
+      Radiant::Config["assets.additional_thumbnails"].gsub(' ','').split(',').collect{|s| s.split('=')}.inject({}) {|ha, (k, v)| ha[k.to_sym] = v; ha}
+    end
   end
   
   # order_by 'title'
@@ -221,11 +228,6 @@ class Asset < ActiveRecord::Base
   
   def height(size='original')
     image? && self.dimensions(size)[1]
-  end
-
-  #delegating methods like image? to class
-  (known_types+[:other]).each do |type|
-    define_method("#{type}?") { self.class.send("#{type}?", asset_content_type) }
   end
   
   private
