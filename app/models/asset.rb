@@ -14,7 +14,7 @@ class Asset < ActiveRecord::Base
     self.class.send :define_method, "#{type}?".intern do |content_type|
       Mime::Type.lookup_by_extension(type.to_s) == content_type.to_s
     end
-    
+  
     define_method "#{type}?".intern do
       self.class.send "#{type}?".intern, asset_content_type
     end
@@ -28,10 +28,14 @@ class Asset < ActiveRecord::Base
       types = Mime::Type.lookup_by_extension(type.to_s).all_types
       send(:sanitize_sql, ['NOT asset_content_type IN (?)', types])
     end
-    
+  
     named_scope type.to_s.pluralize.intern, :conditions => self.send("#{type}_condition".intern)
     named_scope "not_#{type.to_s.pluralize}".intern, :conditions => self.send("not_#{type}_condition".intern)
     known_types.push(type)
+  end
+  
+  def self.known_type?(type)
+    known_types.include?(type)
   end
         
   def other?
@@ -43,9 +47,11 @@ class Asset < ActiveRecord::Base
   end
   
   def self.other_condition
-    # use #send due to a ruby 1.8.2 issue
     send(:sanitize_sql, ['asset_content_type NOT IN (?)', self.mime_types_not_considered_other])
   end
+
+  # the lambda delays interpolation, allowing extensions to affect the other_condition
+  named_scope :others, lambda {{:conditions => self.other_condition}}
   
   # this is made separate for greater consistency and so that it can be overridden or alias_chained
   def self.mime_types_not_considered_other
@@ -166,11 +172,6 @@ class Asset < ActiveRecord::Base
   # alias for backwards-compatibility: movie can be video or swf
   register_type :movie, Mime::SWF.all_types + Mime::VIDEO.all_types
 
-  # 'others' are anything that is not image, video, audio or swf
-  # the lambda delays interpolation, allowing extensions to change the 'other' conduition
-  
-  named_scope :others, lambda {{:conditions => self.other_condition}}
-  
   def thumbnail(size='original')
     return asset.url if size == 'original'
     case 

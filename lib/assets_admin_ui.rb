@@ -13,6 +13,7 @@ module AssetsAdminUI
             asset.edit = Radiant::AdminUI::RegionSet.new do |edit|
               edit.main.concat %w{edit_header edit_form assets_container edit_regenerate}
               edit.form.concat %w{edit_title edit_metadata}
+              edit.show.concat %w{display_filename display_asset}
               # need to DRY this up...
               edit.bucket_pane.concat %w{bucket_notes bucket bucket_bottom}
               edit.asset_tabs.concat %w{bucket_tab}
