@@ -58,6 +58,39 @@ module AssetTags
      end
    end
    
+   Asset.known_types.each do |type|
+     tag "assets:#{type.to_s.pluralize}" do |tag|
+       raise TagError, "page must be defined for assets:#{type} tags" unless tag.locals.page
+       tag.locals.assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
+       tag.expand
+     end
+
+     desc %{
+       Loops through all the attached assets of type #{type}.
+
+       *Usage:* 
+       <pre><code><r:assets:#{type.to_s.pluralize}>...</r:assets:#{type.to_s.pluralize}></code></pre>
+     }
+     tag "attachments:#{type.to_s.pluralize}:each" do |tag|
+       tag.render('asset_list', tag.attr.dup, &tag.block)
+     end
+
+     desc %{
+       Displays the first attached asset of type #{type}.
+
+       *Usage:* 
+       <pre><code><r:assets:first_#{type.to_s}>...</r:assets:first_#{type.to_s}></code></pre>
+     }
+     tag "assets:first_#{type.to_s}" do |tag|
+       raise TagError, "page must be defined for assets:first_#{type} tag" unless tag.locals.page
+       assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
+       if assets.any?
+         tag.locals.asset = assets.first
+         tag.expand
+       end
+     end
+   end
+
    desc %{
      Renders the contained elements only if the current contextual page has one or
      more assets. The @min_count@ attribute specifies the minimum number of required
@@ -73,7 +106,7 @@ module AssetTags
    end
    
    desc %{
-     The opposite of @<r:if_attachments/>@.
+     The opposite of @<r:if_assets/>@.
    }
    tag 'unless_assets' do |tag|
      count = tag.attr['min_count'] && tag.attr['min_count'].to_i || 1

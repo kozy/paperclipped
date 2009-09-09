@@ -37,7 +37,9 @@ class Asset < ActiveRecord::Base
   def self.known_type?(type)
     known_types.include?(type)
   end
-        
+
+  # 'other' here means 'document', really: anything that is not image, audio or video.
+  
   def other?
     self.class.other?(asset_content_type)
   end
@@ -46,14 +48,14 @@ class Asset < ActiveRecord::Base
     !self.mime_types_not_considered_other.include? content_type.to_s
   end
   
+  # the lambda delays interpolation, allowing extensions to affect the other_condition
+  named_scope :others, lambda {{:conditions => self.other_condition}}
+  known_types.push(:other)
+  
   def self.other_condition
     send(:sanitize_sql, ['asset_content_type NOT IN (?)', self.mime_types_not_considered_other])
   end
 
-  # the lambda delays interpolation, allowing extensions to affect the other_condition
-  named_scope :others, lambda {{:conditions => self.other_condition}}
-  
-  # this is made separate for greater consistency and so that it can be overridden or alias_chained
   def self.mime_types_not_considered_other
     Mime::IMAGE.all_types + Mime::AUDIO.all_types + Mime::MOVIE.all_types  
   end
@@ -165,7 +167,7 @@ class Asset < ActiveRecord::Base
   
   register_type :image, %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif]
   register_type :video, %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
-  register_type :audio, %w[audio/mpeg audio/ogg application/ogg audio/x-ms-wma audio/vnd.rn-realaudio audio/x-wav]
+  register_type :audio, %w[audio/mpeg audio/mpg audio/ogg application/ogg audio/x-ms-wma audio/vnd.rn-realaudio audio/x-wav]
   register_type :swf, %w[application/x-shockwave-flash]
   register_type :pdf, %w[application/pdf]
 
