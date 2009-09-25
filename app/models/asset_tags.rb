@@ -220,6 +220,15 @@ module AssetTags
     asset.asset_file_name rescue nil
   end
   
+  tag "assets:illustration" do |tag|
+    options = tag.attr.dup
+    asset = find_asset(tag, options)
+
+    result = tag.render('assets:image', options)
+    result << %{<p class="caption">#{tag.render('assets:caption', options)}</p>}
+
+  end
+  
   desc %{
     Renders an image tag for the asset. Using the option size attribute, different sizes can be display. Thumbnail and icon are built 
     in, but custom sizes can be set using assets.addition_thumbnails in the Radiant::Config settings.
