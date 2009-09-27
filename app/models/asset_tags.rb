@@ -71,7 +71,7 @@ module AssetTags
        *Usage:* 
        <pre><code><r:assets:#{type.to_s.pluralize}>...</r:assets:#{type.to_s.pluralize}></code></pre>
      }
-     tag "attachments:#{type.to_s.pluralize}:each" do |tag|
+     tag "assets:#{type.to_s.pluralize}:each" do |tag|
        tag.render('asset_list', tag.attr.dup, &tag.block)
      end
 
@@ -362,6 +362,23 @@ module AssetTags
     asset = tag.locals.asset
     asset.asset_file_name[/\.(\w+)$/, 1]
   end
+  
+  # simple, general purpose asset lister, useful because the assets:each tag sets tags.local.assets
+  # and often we would rather set first and then call the lister
+  
+  desc %{
+    This is a general purpose asset lister. It wouldn't normally be accessed directly but a lot of other tags make use of it.
+  }
+  tag 'asset_list' do |tag|
+    raise TagError, "no assets for asset_list" unless tag.locals.assets
+    result = []
+    tag.locals.assets.each do |asset|
+      tag.locals.asset = asset
+      result << tag.expand
+    end 
+    result
+  end
+  
   
   private
     
