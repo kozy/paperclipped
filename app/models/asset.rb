@@ -3,6 +3,7 @@ require 'mime_type_ext'
 class Asset < ActiveRecord::Base
   @@known_types = []
   cattr_accessor :known_types
+
   
   # type declaration machinery is consolidated here so that other extensions can add more types
   # for example: Asset.register_type(:gps, %w{application/gpx+xml application/tcx+xml})

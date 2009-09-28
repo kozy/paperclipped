@@ -60,16 +60,16 @@ module AssetTags
    
    Asset.known_types.each do |type|
      tag "assets:#{type.to_s.pluralize}" do |tag|
-       raise TagError, "page must be defined for assets:#{type} tags" unless tag.locals.page
+       raise TagError, "page must be defined for assets:#{type.to_s.pluralize} tags" unless tag.locals.page
        tag.locals.assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
        tag.expand
      end
 
      desc %{
-       Loops through all the attached assets of type #{type}.
+       Loops through all the *attached* assets of type #{type}.
 
        *Usage:* 
-       <pre><code><r:assets:#{type.to_s.pluralize}>...</r:assets:#{type.to_s.pluralize}></code></pre>
+       <pre><code><r:assets:#{type.to_s.pluralize}:each>...</r:assets:#{type.to_s.pluralize}:each></code></pre>
      }
      tag "assets:#{type.to_s.pluralize}:each" do |tag|
        tag.render('asset_list', tag.attr.dup, &tag.block)
@@ -89,6 +89,23 @@ module AssetTags
          tag.expand
        end
      end
+     
+     tag "assets:all_#{type.to_s.pluralize}" do |tag|
+       tag.locals.assets = Asset.send(type.to_s.pluralize.intern)
+       tag.expand
+     end
+
+     desc %{
+       Loops through all the assets of type #{type}.
+       Use r:assets:#{type.to_s.pluralize}:each if you want all the #{type} assets attached to this page.
+
+       *Usage:* 
+       <pre><code><r:assets:all_#{type.to_s.pluralize}:each>...</r:assets:all_#{type.to_s.pluralize}:each></code></pre>
+     }
+     tag "assets:all_#{type.to_s.pluralize}:each" do |tag|
+       tag.render('asset_list', tag.attr.dup, &tag.block)
+     end
+     
    end
 
    desc %{
