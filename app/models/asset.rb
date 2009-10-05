@@ -123,6 +123,19 @@ class Asset < ActiveRecord::Base
       thumbnail_sizes.keys
     end
     
+    # returns a descriptive list suitable for use as options in a select box
+    
+    def thumbnail_options
+      asset_sizes = thumbnail_sizes.collect{|k,v| 
+        size_id = k
+        size_description = "#{k}: "
+        size_description << (v.is_a?(Array) ? v.join(' as ') : v)
+        [size_description, size_id] 
+      }.sort_by{|pair| pair.last.to_s}
+      asset_sizes.unshift ['Original (as uploaded)', 'original']
+      asset_sizes
+    end
+    
     # this is just a pointer that can be alias-chained in other extensions to add to or replace the list of thumbnail mechanisms
     # its invocation is delayed with a lambda in has_attached_file so that it isn't called when the extension loads, but when an attachment initializes:
     # that way we can be sure that all the related extensions have loaded and all the alias_chains are in place.
