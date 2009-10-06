@@ -89,6 +89,16 @@ module AssetTags
          tag.expand
        end
      end
+
+     tag "assets:second_#{type.to_s}" do |tag|
+       raise TagError, "page must be defined for assets:second_#{type} tag" unless tag.locals.page
+       assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
+       if assets.length > 1
+         assets.shift
+         tag.locals.asset = assets.first
+         tag.expand
+       end
+     end
    end
 
    desc %{
