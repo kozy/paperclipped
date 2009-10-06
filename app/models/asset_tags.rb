@@ -60,13 +60,13 @@ module AssetTags
    
    Asset.known_types.each do |type|
      tag "assets:#{type.to_s.pluralize}" do |tag|
-       raise TagError, "page must be defined for assets:#{type.to_s.pluralize} tags" unless tag.locals.page
+       raise TagError, "page must be defined for assets:#{type} tags" unless tag.locals.page
        tag.locals.assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
        tag.expand
      end
 
      desc %{
-       Loops through all the *attached* assets of type #{type}.
+       Loops through all the attached assets of type #{type}.
 
        *Usage:* 
        <pre><code><r:assets:#{type.to_s.pluralize}:each>...</r:assets:#{type.to_s.pluralize}:each></code></pre>
@@ -85,6 +85,22 @@ module AssetTags
        raise TagError, "page must be defined for assets:first_#{type} tag" unless tag.locals.page
        assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
        if assets.any?
+         tag.locals.asset = assets.first
+         tag.expand
+       end
+     end
+     
+     desc %{
+       Displays the second attached asset of type #{type}. This is occasionaly useful in rollovers but usually a sign that you're overdoing it :)
+
+       *Usage:* 
+       <pre><code><r:assets:second_#{type.to_s}>...</r:assets:second_#{type.to_s}></code></pre>
+     }
+     tag "assets:second_#{type.to_s}" do |tag|
+       raise TagError, "page must be defined for assets:second_#{type} tag" unless tag.locals.page
+       assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
+       if assets.length > 1
+         assets.shift
          tag.locals.asset = assets.first
          tag.expand
        end
