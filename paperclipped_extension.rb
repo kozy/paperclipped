@@ -24,6 +24,9 @@ class PaperclippedExtension < Radiant::Extension
       asset.attach_page_asset '/admin/assets/attach/:asset/page/:page',  :action => 'attach_asset'
       asset.remove_page_asset '/admin/assets/remove/:asset/page/:page',  :action => 'remove_asset'
     end
+    
+    # File downloader
+    map.resources :assets, :only => :show
   end
   
   def activate
