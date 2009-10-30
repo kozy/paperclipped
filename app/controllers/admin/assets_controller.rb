@@ -25,7 +25,6 @@ class Admin::AssetsController < Admin::ResourceController
         @page = Page.find(params[:page])
         @asset.pages << @page
       end
-      
       respond_to do |format|
         format.html { 
           flash[:notice] = "Asset successfully uploaded."
@@ -43,6 +42,13 @@ class Admin::AssetsController < Admin::ResourceController
             end
           end
         } 
+      end
+    else
+      respond_to do |format|
+        format.html { 
+          flash[:error] = "Sorry: asset could not be saved."
+          render :action => 'new'
+        }
       end
     end
   end

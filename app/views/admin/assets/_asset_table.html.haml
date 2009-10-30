@@ -23,9 +23,12 @@
             - tbody.title_cell do
               %td.asset-title
                 = link_to asset.title, edit_admin_asset_path(asset) 
-                &nbsp;
+                %br
                 %span.caption
-                  = asset.caption
+                  - if asset.furniture?
+                    (site furniture)
+                  - else
+                    = asset.caption
             - tbody.content_type_cell do
               %td.content_type
                 = asset.asset_content_type

@@ -111,3 +111,17 @@ table#site-map td.assets, table#site-map th.assets  { text-align: right; border:
   line-height: 20px; width: 120px; cursor: pointer; margin: 0 5px; padding: 5px 10px;
   font-size: 80%; font-style: italic; background: white; -moz-border-radius: 3px; -webkit-border-radius: 3px;
 }
+
+p.haserror {
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #d1005d;
+  margin-left: -16px;
+  padding-left: 12px;
+  color: #d1005d; }
+  p.haserror input, p.haserror textarea {
+    border-width: 1px;
+    border-style: solid;
+    border-color: #d1005d; }
+  p.haserror label {
+    color: #d1005d; }

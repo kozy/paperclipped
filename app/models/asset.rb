@@ -4,7 +4,6 @@ class Asset < ActiveRecord::Base
   @@known_types = []
   cattr_accessor :known_types
 
-  
   # type declaration machinery is consolidated here so that other extensions can add more types
   # for example: Asset.register_type(:gps, %w{application/gpx+xml application/tcx+xml})
   # the main Asset register_type() calls are in the class definition below after validation
@@ -52,6 +51,10 @@ class Asset < ActiveRecord::Base
   # the lambda delays interpolation, allowing extensions to affect the other_condition
   named_scope :others, lambda {{:conditions => self.other_condition}}
   known_types.push(:other)
+  
+  # this is just a convenience to omit site-layout images from galleries
+  named_scope :furniture, {:conditions => 'assets.furniture = 1'}
+  named_scope :not_furniture, {:conditions => 'assets.furniture = 0 or assets.furniture is null'}
   
   def self.other_condition
     send(:sanitize_sql, ['asset_content_type NOT IN (?)', self.mime_types_not_considered_other])

@@ -107,7 +107,7 @@ module AssetTags
      end
      
      tag "assets:all_#{type.to_s.pluralize}" do |tag|
-       tag.locals.assets = Asset.send(type.to_s.pluralize.intern)
+       tag.locals.assets = Asset.not_furniture.send(type.to_s.pluralize.intern)
        tag.expand
      end
 
@@ -400,7 +400,8 @@ module AssetTags
   # and often we would rather set first and then call the lister
   
   desc %{
-    This is a general purpose asset lister. It wouldn't normally be accessed directly but a lot of other tags make use of it.
+    This is a general purpose asset lister. It wouldn't normally be accessed directly but a lot of other tags make use of it. 
+    Unlike r:assets:each it assumes that we already have a collection of assets to work with.
   }
   tag 'asset_list' do |tag|
     raise TagError, "no assets for asset_list" unless tag.locals.assets

@@ -1,4 +1,11 @@
 = render_region :form_top
+
+- if @asset.errors.any?
+  %p.haserror
+    Sorry: there were problems:
+    %br
+    = @asset.errors.full_messages
+
 - render_region :form do |form|
   - form.edit_title do
     %p.title
@@ -12,6 +19,12 @@
             %label{ :for => "asset_caption" } Caption
           %td.field
             = f.text_field :caption, :class => 'textbox', :maxlength => 255 
+        %tr
+          %td.label
+            Display
+          %td.field{:style => 'text-align: left;'}
+            = f.check_box :furniture
+            = f.label :furniture, "Site furniture? (not shown in lists and galleries)"
         = render_region :extended_metadata
     %p
       %small
