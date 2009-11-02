@@ -29,8 +29,18 @@ class Asset < ActiveRecord::Base
       send(:sanitize_sql, ['NOT asset_content_type IN (?)', types])
     end
   
-    named_scope type.to_s.pluralize.intern, :conditions => self.send("#{type}_condition".intern)
-    named_scope "not_#{type.to_s.pluralize}".intern, :conditions => self.send("not_#{type}_condition".intern)
+    named_scope type.to_s.pluralize.intern, :conditions => self.send("#{type}_condition".intern) do
+      def paged (options={})
+        paginate({:per_page => 20, :page => 1}.merge(options))
+      end
+    end
+
+    named_scope "not_#{type.to_s.pluralize}".intern, :conditions => self.send("not_#{type}_condition".intern) do
+      def paged (options={})
+        paginate({:per_page => 20, :page => 1}.merge(options))
+      end
+    end
+    
     known_types.push(type)
   end
   
@@ -170,7 +180,7 @@ class Asset < ActiveRecord::Base
                                  
   has_many :page_attachments, :dependent => :destroy
   has_many :pages, :through => :page_attachments
-                                 
+
   belongs_to :created_by, :class_name => 'User'
   belongs_to :updated_by, :class_name => 'User'
   

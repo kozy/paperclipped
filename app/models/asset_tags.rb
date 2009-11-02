@@ -105,23 +105,6 @@ module AssetTags
          tag.expand
        end
      end
-     
-     tag "assets:all_#{type.to_s.pluralize}" do |tag|
-       tag.locals.assets = Asset.not_furniture.send(type.to_s.pluralize.intern)
-       tag.expand
-     end
-
-     desc %{
-       Loops through all the assets of type #{type}.
-       Use r:assets:#{type.to_s.pluralize}:each if you want all the #{type} assets attached to this page.
-
-       *Usage:* 
-       <pre><code><r:assets:all_#{type.to_s.pluralize}:each>...</r:assets:all_#{type.to_s.pluralize}:each></code></pre>
-     }
-     tag "assets:all_#{type.to_s.pluralize}:each" do |tag|
-       tag.render('asset_list', tag.attr.dup, &tag.block)
-     end
-     
    end
 
    desc %{
