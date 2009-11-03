@@ -1,5 +1,7 @@
 class AssetsController < ApplicationController
 
+  no_login_required
+
   # delivers an asset indirectly so as not to block
 
   def show
