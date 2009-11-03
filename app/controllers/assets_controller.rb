@@ -1,9 +1,14 @@
 class AssetsController < ApplicationController
 
+  # delivers an asset indirectly so as not to block
+
   def show
     @asset = Asset.find(params[:id])
-    response.headers['X-Accel-Redirect'] = @asset.asset.path
-    send_file @asset.asset.path, :type => @asset.asset_content_type, :x_sendfile => true
+    response.headers['X-Accel-Redirect'] = @asset.asset.url
+    response.headers["Content-Type"] = @asset.asset_content_type
+    response.headers['Content-Disposition'] = "attachment; filename=#{@asset.asset_file_name}" 
+    response.headers['Content-Length'] = @asset.asset_file_size
+    render :nothing => true
   end
   
 end
