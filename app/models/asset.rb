@@ -65,6 +65,7 @@ class Asset < ActiveRecord::Base
   # this is just a convenience to omit site-layout images from galleries
   named_scope :furniture, {:conditions => 'assets.furniture = 1'}
   named_scope :not_furniture, {:conditions => 'assets.furniture = 0 or assets.furniture is null'}
+  named_scope :newest_first, { :order => 'created_at DESC'}
   
   def self.other_condition
     send(:sanitize_sql, ['asset_content_type NOT IN (?)', self.mime_types_not_considered_other])
@@ -191,8 +192,6 @@ class Asset < ActiveRecord::Base
     :less_than => Radiant::Config["assets.max_asset_size"].to_i.megabytes if Radiant::Config.table_exists? && Radiant::Config["assets.max_asset_size"]
     
   before_save :assign_title
-  
-  default_scope :order => 'created_at DESC'
   
   register_type :image, %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif]
   register_type :video, %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
