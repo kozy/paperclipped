@@ -58,55 +58,6 @@ module AssetTags
      end
    end
    
-   Asset.known_types.each do |type|
-     tag "assets:#{type.to_s.pluralize}" do |tag|
-       raise TagError, "page must be defined for assets:#{type} tags" unless tag.locals.page
-       tag.locals.assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
-       tag.expand
-     end
-
-     desc %{
-       Loops through all the attached assets of type #{type}.
-
-       *Usage:* 
-       <pre><code><r:assets:#{type.to_s.pluralize}:each>...</r:assets:#{type.to_s.pluralize}:each></code></pre>
-     }
-     tag "assets:#{type.to_s.pluralize}:each" do |tag|
-       tag.render('asset_list', tag.attr.dup, &tag.block)
-     end
-
-     desc %{
-       Displays the first attached asset of type #{type}.
-
-       *Usage:* 
-       <pre><code><r:assets:first_#{type.to_s}>...</r:assets:first_#{type.to_s}></code></pre>
-     }
-     tag "assets:first_#{type.to_s}" do |tag|
-       raise TagError, "page must be defined for assets:first_#{type} tag" unless tag.locals.page
-       assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
-       if assets.any?
-         tag.locals.asset = assets.first
-         tag.expand
-       end
-     end
-     
-     desc %{
-       Displays the second attached asset of type #{type}. This is occasionaly useful in rollovers but usually a sign that you're overdoing it :)
-
-       *Usage:* 
-       <pre><code><r:assets:second_#{type.to_s}>...</r:assets:second_#{type.to_s}></code></pre>
-     }
-     tag "assets:second_#{type.to_s}" do |tag|
-       raise TagError, "page must be defined for assets:second_#{type} tag" unless tag.locals.page
-       assets = tag.locals.page.assets.send(type.to_s.pluralize.intern)
-       if assets.length > 1
-         assets.shift
-         tag.locals.asset = assets.first
-         tag.expand
-       end
-     end
-   end
-
    desc %{
      Renders the contained elements only if the current contextual page has one or
      more assets. The @min_count@ attribute specifies the minimum number of required
@@ -194,30 +145,7 @@ module AssetTags
     asset_content_type = tag.locals.asset.asset_content_type
     tag.expand unless asset_content_type.match(regexp).nil?
   end
-  
-  Asset.known_types.each do |type|
-    desc %{
-      Renders the contained elements only if the asset is of the specified type.
-
-      *Usage:* 
-      <pre><code><r:assets:if_#{type}>...</r:assets:if_#{type}></code></pre>
-    }
-    tag "assets:if_#{type}" do |tag|
-      tag.expand if tag.locals.asset.send("#{type}?".intern)
-    end
-
-    desc %{
-      Renders the contained elements only if the asset is not of the specified type.
-
-      *Usage:* 
-      <pre><code><r:assets:unless_#{type}>...</r:assets:unless_#{type}></code></pre>
-    }
-    tag "assets:unless_#{type}" do |tag|
-      tag.expand unless tag.locals.asset.send("#{type}?".intern)
-    end
-
-  end
-  
+    
   [:title, :caption, :asset_file_name, :asset_content_type, :asset_file_size, :id].each do |method|
     desc %{
       Renders the `#{method.to_s}' attribute of the asset.     
@@ -229,20 +157,11 @@ module AssetTags
       asset.send(method) rescue nil
     end
   end
-  
+
   tag "assets:filename" do |tag|
     options = tag.attr.dup
     asset = find_asset(tag, options)
     asset.asset_file_name rescue nil
-  end
-  
-  tag "assets:illustration" do |tag|
-    options = tag.attr.dup
-    asset = find_asset(tag, options)
-
-    result = tag.render('assets:image', options)
-    result << %{<p class="caption">#{tag.render('assets:caption', options)}</p>}
-
   end
   
   desc %{
@@ -378,24 +297,6 @@ module AssetTags
     asset = tag.locals.asset
     asset.asset_file_name[/\.(\w+)$/, 1]
   end
-  
-  # simple, general purpose asset lister, useful because the assets:each tag sets tags.local.assets
-  # and often we would rather set first and then call the lister
-  
-  desc %{
-    This is a general purpose asset lister. It wouldn't normally be accessed directly but a lot of other tags make use of it. 
-    Unlike r:assets:each it assumes that we already have a collection of assets to work with.
-  }
-  tag 'asset_list' do |tag|
-    raise TagError, "no assets for asset_list" unless tag.locals.assets
-    result = []
-    tag.locals.assets.each do |asset|
-      tag.locals.asset = asset
-      result << tag.expand
-    end 
-    result
-  end
-  
   
   private
     
