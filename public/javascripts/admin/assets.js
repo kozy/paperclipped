@@ -90,9 +90,6 @@ Asset.MakeDroppables = function () {
         }
       });      
     	box.addClassName('droppable');
-    	if(init_load_wym_editor()){
-    	  init_load_wym_editor();
-    	}
     }
   });
 }
@@ -142,6 +139,8 @@ Asset.FileTypes = Behavior.create({
 Asset.WaitingForm = Behavior.create({
   onsubmit: function(e){
     this.element.addClassName('waiting');
+    $('asset_asset').disable();
+    $('asset_submit').disable();
     return true;
   }
 });
@@ -149,16 +148,14 @@ Asset.WaitingForm = Behavior.create({
 Asset.ResetForm = function (name) {
   var element = $('asset-upload');
   element.removeClassName('waiting');
+  $('asset_asset').enable();
+  $('asset_submit').enable();
   element.reset();
 }
 
 Asset.AddAsset = function (name) {
   element = $(name); 
   asset = element.select('.asset')[0];
-  if (window.console && window.console.log) {
-    console.log('inserted element is ', element);
-    console.log('contained asset is ', asset);
-  }
   if (asset) {
     new Draggable(asset, { revert: true });
   }
