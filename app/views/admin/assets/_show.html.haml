@@ -1,11 +1,8 @@
-- render_region :show do |show|
-  %p.content
-    - show.display_filename do
-      %label.filename
-        = "Filename: #{@asset.asset_file_name unless @asset.new_record?}"
-    - show.display_asset do
-      .asset
-        - if @asset.image?
-          = image_tag @asset.thumbnail(Radiant::Config['assets.display_size'].to_sym)
-        - else
-          = link_to image_tag(@asset.thumbnail(:thumbnail)), @asset.asset.url
+%p.content
+  %label.filename
+    = "Filename: #{@asset.asset_file_name unless @asset.new_record?}"
+  .asset
+    - if @asset.image?
+      = image_tag @asset.thumbnail(Radiant::Config['assets.display_size'].to_sym)
+    - else
+      = link_to image_tag(@asset.thumbnail(:thumbnail)), @asset.asset.url
