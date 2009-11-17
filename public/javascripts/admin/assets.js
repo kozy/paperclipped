@@ -139,7 +139,6 @@ Asset.FileTypes = Behavior.create({
 Asset.WaitingForm = Behavior.create({
   onsubmit: function(e){
     this.element.addClassName('waiting');
-    $('asset_asset').disable();
     $('asset_submit').disable();
     return true;
   }
@@ -148,7 +147,6 @@ Asset.WaitingForm = Behavior.create({
 Asset.ResetForm = function (name) {
   var element = $('asset-upload');
   element.removeClassName('waiting');
-  $('asset_asset').enable();
   $('asset_submit').enable();
   element.reset();
 }

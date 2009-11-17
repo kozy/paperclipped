@@ -301,7 +301,7 @@ module AssetTags
   private
     
     def find_asset(tag, options)
-      raise TagError, "'title' attribute required" unless title = options.delete('title') or id = options.delete('id') or tag.locals.asset
+      raise TagError, "'title' or 'id' attribute required" unless title = options.delete('title') or id = options.delete('id') or tag.locals.asset
       tag.locals.asset || Asset.find_by_title(title) || Asset.find(id)
     end
     
