@@ -43,91 +43,111 @@ module AssetTags
     <pre><code><r:assets:first>...</r:assets:first></code></pre>
   }
   tag 'assets:first' do |tag|
-     attachments = tag.locals.page.page_attachments
-     if first = attachments.first
-       tag.locals.asset = first.asset
-       tag.expand
-     end
-   end
-   
-   tag 'assets:if_first' do |tag|
-     attachments = tag.locals.assets
-     asset = tag.locals.asset
-     if asset == attachments.first.asset
-       tag.expand
-     end
-   end
-   
-   desc %{
-     Renders the contained elements only if the current contextual page has one or
-     more assets. The @min_count@ attribute specifies the minimum number of required
-     assets. You can also filter by extensions with the @extensions@ attribute.
+    attachments = tag.locals.page.page_attachments
+    if first = attachments.first
+      tag.locals.asset = first.asset
+      tag.expand
+    end
+  end
 
-     *Usage:*
-     <pre><code><r:if_assets [min_count="n"] [extensions="pdf|jpg"]>...</r:if_assets></code></pre>
-   }
-   tag 'if_assets' do |tag|
-     count = tag.attr['min_count'] && tag.attr['min_count'].to_i || 1
-     assets = tag.locals.page.assets.count(:conditions => assets_find_options(tag)[:conditions])
-     tag.expand if assets >= count
-   end
-   
-   desc %{
-     The opposite of @<r:if_assets/>@.
-   }
-   tag 'unless_assets' do |tag|
-     count = tag.attr['min_count'] && tag.attr['min_count'].to_i || 1
-     assets = tag.locals.page.assets.count(:conditions => assets_find_options(tag)[:conditions])
-     tag.expand unless assets >= count
-   end
+  tag 'assets:if_first' do |tag|
+    attachments = tag.locals.assets
+    asset = tag.locals.asset
+    if asset == attachments.first.asset
+      tag.expand
+    end
+  end
 
+  desc %{
+    Renders the contained elements only if the current contextual page has one or
+    more assets. The @min_count@ attribute specifies the minimum number of required
+    assets. You can also filter by extensions with the @extensions@ attribute.
+
+    *Usage:*
+    <pre><code><r:if_assets [min_count="n"] [extensions="pdf|jpg"]>...</r:if_assets></code></pre>
+  }
+  tag 'if_assets' do |tag|
+    count = tag.attr['min_count'] && tag.attr['min_count'].to_i || 1
+    assets = tag.locals.page.assets.count(:conditions => assets_find_options(tag)[:conditions])
+    tag.expand if assets >= count
+  end
+
+  desc %{
+    The opposite of @<r:if_assets/>@.
+  }
+  tag 'unless_assets' do |tag|
+    count = tag.attr['min_count'] && tag.attr['min_count'].to_i || 1
+    assets = tag.locals.page.assets.count(:conditions => assets_find_options(tag)[:conditions])
+    tag.expand unless assets >= count
+  end
+
+  desc %{
+    Renders the value for a top padding for the image. Put the image in a container with specified height and using this tag you can vertically align the image within it's container.
+
+    *Usage*:
+    <pre><code><r:assets:top_padding container = "140" [size="icon"]/></code></pre>
+
+    *Working Example*:
+    <pre><code>
+      <ul>
+        <r:assets:each>
+          <li style="height:140px">
+            <img style="padding-top:<r:top_padding size='category' container='140' />px" 
+                 src="<r:url />" alt="<r:title />" />
+          </li>
+        </r:assets:each>
+      </ul>
+    </code></pre>
+  }
+  tag "assets:top_padding" do |tag|
+    raise TagError, "'container' attribute required" unless tag.attr['container']
+    options = tag.attr.dup
+    asset = find_asset(tag, options)
+    if asset.image?
+      size = options['size'] ? options.delete('size') : 'icon'
+      container = options.delete('container')
+      img_height = asset.height(size)
+      (container.to_i - img_height.to_i)/2
+    else
+      raise TagError, "Asset is not an image"
+    end
+  end
+
+  ['height','width'].each do |att|
     desc %{
-      Renders the value for a top padding for the image. Put the image in a container with specified height and using this tag you can vertically align the image within it's container.
-
-      *Usage*:
-      <pre><code><r:assets:top_padding container = "140" [size="icon"]/></code></pre>
-
-      *Working Example*:
-      <pre><code>
-        <ul>
-          <r:assets:each>
-            <li style="height:140px">
-              <img style="padding-top:<r:top_padding size='category' container='140' />px" 
-                   src="<r:url />" alt="<r:title />" />
-            </li>
-          </r:assets:each>
-        </ul>
-      </code></pre>
+      Renders the #{att} of the asset.
     }
-    tag "assets:top_padding" do |tag|
-      raise TagError, "'container' attribute required" unless tag.attr['container']
+    tag "assets:#{att}" do |tag|
       options = tag.attr.dup
       asset = find_asset(tag, options)
       if asset.image?
-        size = options['size'] ? options.delete('size') : 'icon'
-        container = options.delete('container')
-        img_height = asset.height(size)
-        (container.to_i - img_height.to_i)/2
+        size = options['size'] ? options.delete('size') : 'original'
+        asset.send(att, size)
       else
         raise TagError, "Asset is not an image"
       end
     end
-   
-    ['height','width'].each do |att|
-      desc %{
-        Renders the #{att} of the asset.
-      }
-      tag "assets:#{att}" do |tag|
-        options = tag.attr.dup
-        asset = find_asset(tag, options)
-        if asset.image?
-          size = options['size'] ? options.delete('size') : 'original'
-          asset.send(att, size)
-        else
-          raise TagError, "Asset is not an image"
-        end
-      end
+  end
+
+  ['vertical','horizontal', 'square'].each do |property|
+    desc %{
+      Expands only if the asset is an image and the image file is #{property}.
+    }
+    tag "assets:if_#{property}" do |tag|
+      options = tag.attr.dup
+      tag.locals.asset = find_asset(tag, options)
+      tag.expand if tag.locals.asset.image? && tag.locals.asset.send("#{property}?".intern)
     end
+    
+    desc %{
+      Expands  if the asset is not an image or the image file is not #{property}.
+    }
+    tag "assets:unless_#{property}" do |tag|
+      options = tag.attr.dup
+      tag.locals.asset = find_asset(tag, options)
+      tag.expand if !tag.locals.asset.image? || !tag.locals.asset.send("#{property}?".intern)
+    end
+  end
 
   desc %{
     Renders the containing elements only if the asset's content type matches the regular expression given in the matches attribute.

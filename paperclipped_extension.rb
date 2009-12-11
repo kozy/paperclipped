@@ -1,6 +1,6 @@
 # require_dependency 'application_controller'
-require File.dirname(__FILE__) + '/lib/url_additions'
-include UrlAdditions
+# require File.dirname(__FILE__) + '/lib/url_additions'
+# include UrlAdditions
 
 class PaperclippedExtension < Radiant::Extension
   version "0.8.0"
@@ -29,6 +29,19 @@ class PaperclippedExtension < Radiant::Extension
     map.resources :assets, :only => :show
   end
   
+  extension_config do |config|
+    config.gem 'paperclip', :version => '~> 2.3', :source => 'http://gemcutter.org'
+    config.gem 'acts_as_list', :source => 'http://gemcutter.org'
+    config.gem 'will_paginate', :version => '~> 2.3.11', :source => 'http://gemcutter.org'
+    config.gem 'responds_to_parent', :source => 'http://gemcutter.org'
+    config.after_initialize do
+      Paperclip.interpolates :no_original_style do |attachment, style|
+        style ||= :original
+        style == attachment.default_style ? nil : "_#{style}"
+      end
+    end
+  end
+  
   def activate
     unless defined? admin.asset # UI is a singleton and already loaded
       Radiant::AdminUI.send :include, AssetsAdminUI
@@ -53,10 +66,12 @@ class PaperclippedExtension < Radiant::Extension
     
     # This is just needed for testing if you are using mod_rails
     if Radiant::Config.table_exists? && Radiant::Config["assets.image_magick_path"]
-      Paperclip.options[:image_magick_path] = Radiant::Config["assets.image_magick_path"]
+      Paperclip.options[:command_path] = Radiant::Config["assets.image_magick_path"]
     end
     
     admin.tabs.add "Assets", "/admin/assets", :after => "Snippets", :visibility => [:all]
+    
+    
   end
   
   def deactivate

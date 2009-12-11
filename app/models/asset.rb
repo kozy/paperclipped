@@ -158,6 +158,18 @@ class Asset < ActiveRecord::Base
       thumbnail_sizes
     end
 
+    def thumbnail_dimensions(size)
+      if style = thumbnail_sizes[size]
+        style.is_a?(Array) ? style.first : style
+      end
+    end
+
+    def thumbnail_format(size)
+      if style = thumbnail_sizes(size)
+        style.last if style.is_a?(Array)
+      end
+    end
+
   private
     def additional_thumbnails
       Radiant::Config["assets.additional_thumbnails"].gsub(' ','').split(',').collect{|s| s.split('=')}.inject({}) {|ha, (k, v)| ha[k.to_sym] = v; ha}
@@ -166,6 +178,12 @@ class Asset < ActiveRecord::Base
   
   # order_by 'title'
 
+  has_many :page_attachments, :dependent => :destroy
+  has_many :pages, :through => :page_attachments
+
+  belongs_to :created_by, :class_name => 'User'
+  belongs_to :updated_by, :class_name => 'User'
+  
   has_attached_file :asset,
                     :processors => lambda {|instance| instance.choose_processors },   # this allows us to set processors per file type, and to add more in other extensions
                     :styles => lambda { thumbnail_definitions },                      # and this lets extensions add thumbnailers (and also usefully defers the call)
@@ -178,20 +196,15 @@ class Asset < ActiveRecord::Base
                     :bucket => Radiant::Config["assets.s3.bucket"],
                     :url => Radiant::Config["assets.url"] ? Radiant::Config["assets.url"] : "/:class/:id/:basename:no_original_style.:extension", 
                     :path => Radiant::Config["assets.path"] ? Radiant::Config["assets.path"] : ":rails_root/public/:class/:id/:basename:no_original_style.:extension"
-                                 
-  has_many :page_attachments, :dependent => :destroy
-  has_many :pages, :through => :page_attachments
 
-  belongs_to :created_by, :class_name => 'User'
-  belongs_to :updated_by, :class_name => 'User'
-  
+  before_save :assign_title
+  after_post_process :note_dimensions
+                                 
   validates_attachment_presence :asset, :message => "You must choose a file to upload!"
   validates_attachment_content_type :asset, 
     :content_type => Radiant::Config["assets.content_types"].gsub(' ','').split(',') if Radiant::Config.table_exists? && Radiant::Config["assets.content_types"] && Radiant::Config["assets.skip_filetype_validation"] == nil
   validates_attachment_size :asset, 
     :less_than => Radiant::Config["assets.max_asset_size"].to_i.megabytes if Radiant::Config.table_exists? && Radiant::Config["assets.max_asset_size"]
-    
-  before_save :assign_title
   
   register_type :image, %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif]
   register_type :video, %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
@@ -237,34 +250,61 @@ class Asset < ActiveRecord::Base
   def basename
     File.basename(asset_file_name, ".*") if asset_file_name
   end
-  
+
   def extension
     asset_file_name.split('.').last.downcase if asset_file_name
   end
-  
-  def dimensions(size='original')
-    @dimensions ||= {}
-    @dimensions[size] ||= image? && begin
-      image_file = "#{RAILS_ROOT}/public#{self.thumbnail(size)}"
-      image_size = ImageSize.new(open(image_file).read)
-      [image_size.get_width, image_size.get_height]
-    rescue
-      [0, 0]
+
+  # we should be able to avoid going back to the file
+  def geometry(size='original')
+    if size == 'original'
+      Paperclip::Geometry.parse("#{original_width}x#{original_height}")
+    else
+      Paperclip::Geometry.parse(self.class.thumbnail_dimensions(size))
     end
+  end
+  
+  def geometry_from_file
+    Paperclip::Geometry.from_file(asset.path)
+  rescue Paperclip::NotIdentifiedByImageMagickError
+    Paperclip::Geometry.parse("0x0")
   end
   
   def width(size='original')
-    image? && self.dimensions(size)[0]
+    image? ? geometry(size).width : 0
   end
   
   def height(size='original')
-    image? && self.dimensions(size)[1]
+    image? ? geometry(size).height : 0
   end
   
-  private
+  def square?(size='original')
+    image? && geometry(size).square?
+  end
+
+  def vertical?(size='original')
+    image? && geometry(size).vertical?
+  end
+
+  def horizontal?(size='original')
+    image? && geometry(size).horizontal?
+  end
   
-    def assign_title
-      self.title = basename if title.blank?
+private
+
+  def assign_title
+    self.title = basename if title.blank?
+  end
+  
+  def note_dimensions
+    if image? && (geometry = geometry_from_file)
+      self.original_width = geometry.width
+      self.original_height = geometry.height
+      self.original_extension = extension
+      true
+    else
+      false
     end
-    
+  end
+
 end
