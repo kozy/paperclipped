@@ -17,8 +17,6 @@ class PaperclippedExtension < Radiant::Extension
     # Bucket routes
     map.with_options(:controller => 'admin/assets') do |asset|
       asset.add_bucket        "/admin/assets/:id/add",                   :action => 'add_bucket'
-      # asset.refresh_assets    "/admin/assets/:id/refresh",               :action => 'regenerate_thumbnails'
-      
       asset.clear_bucket      "/admin/assets/clear_bucket",              :action => 'clear_bucket'
       asset.reorder_assets    '/admin/assets/reorder/:id',               :action => 'reorder'
       asset.attach_page_asset '/admin/assets/attach/:asset/page/:page',  :action => 'attach_asset'
@@ -43,6 +41,15 @@ class PaperclippedExtension < Radiant::Extension
   end
   
   def activate
+    AssetType.new :image, :mime_types => %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif], :processors => [:thumbnail], :styles => {:icon => ['42x42#', :png], :thumbnail => ['100x100>', :png]}
+    AssetType.new :video, :mime_types => %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
+    AssetType.new :audio, :mime_types => %w[audio/mpeg audio/mpg audio/ogg application/ogg audio/x-ms-wma audio/vnd.rn-realaudio audio/x-wav]
+    AssetType.new :swf, :mime_types => %w[application/x-shockwave-flash]
+    AssetType.new :pdf, :mime_types => %w[application/pdf application/x-pdf]
+    # alias for backwards-compatibility: movie could previously be either video or flash.
+    # (existing mime-type lookup table is not affected but methods like Asset#movie? are created)
+    AssetType.new :movie, :mime_types => AssetType.mime_types_for(:video, :swf)
+    
     unless defined? admin.asset # UI is a singleton and already loaded
       Radiant::AdminUI.send :include, AssetsAdminUI
       admin.asset = Radiant::AdminUI.load_default_asset_regions
@@ -61,7 +68,6 @@ class PaperclippedExtension < Radiant::Extension
       include AssetTags
     }
 
-    # connect UserActionObserver with my models 
     UserActionObserver.instance.send :add_observer!, Asset 
     
     # This is just needed for testing if you are using mod_rails
@@ -70,8 +76,6 @@ class PaperclippedExtension < Radiant::Extension
     end
     
     admin.tabs.add "Assets", "/admin/assets", :after => "Snippets", :visibility => [:all]
-    
-    
   end
   
   def deactivate

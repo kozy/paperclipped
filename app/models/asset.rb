@@ -1,182 +1,7 @@
-require 'mime_type_ext'
-
 class Asset < ActiveRecord::Base
-  @@known_types = []
-  cattr_accessor :known_types
-
-  # type declaration machinery is consolidated here so that other extensions can add more types
-  # for example: Asset.register_type(:gps, %w{application/gpx+xml application/tcx+xml})
-  # the main Asset register_type() calls are in the class definition below after validation
-  
-  def self.register_type(type, mimes)
-    Mime::Type.register mimes.shift, type, mimes       # Mime::Type.register 'image/png', :image, %w[image/x-png image/jpeg image/pjpeg image/jpg image/gif]
-
-    self.class.send :define_method, "#{type}?".intern do |content_type|
-      Mime::Type.lookup_by_extension(type.to_s) == content_type.to_s
-    end
-  
-    define_method "#{type}?".intern do
-      self.class.send "#{type}?".intern, asset_content_type
-    end
-
-    self.class.send :define_method, "#{type}_condition".intern do
-      types = Mime::Type.lookup_by_extension(type.to_s).all_types
-      send(:sanitize_sql, ['asset_content_type IN (?)', types])
-    end
-
-    self.class.send :define_method, "not_#{type}_condition".intern do
-      types = Mime::Type.lookup_by_extension(type.to_s).all_types
-      send(:sanitize_sql, ['NOT asset_content_type IN (?)', types])
-    end
-  
-    named_scope type.to_s.pluralize.intern, :conditions => self.send("#{type}_condition".intern) do
-      def paged (options={})
-        paginate({:per_page => 20, :page => 1}.merge(options))
-      end
-    end
-
-    named_scope "not_#{type.to_s.pluralize}".intern, :conditions => self.send("not_#{type}_condition".intern) do
-      def paged (options={})
-        paginate({:per_page => 20, :page => 1}.merge(options))
-      end
-    end
-    
-    known_types.push(type)
-  end
-  
-  def self.known_type?(type)
-    known_types.include?(type)
-  end
-
-  # 'other' here means 'document', really: anything that is not image, audio or video.
-  
-  def other?
-    self.class.other?(asset_content_type)
-  end
-
-  def self.other?(content_type)
-    !self.mime_types_not_considered_other.include? content_type.to_s
-  end
-  
-  # the lambda delays interpolation, allowing extensions to affect the other_condition
-  named_scope :others, lambda {{:conditions => self.other_condition}}
-  known_types.push(:other)
-  
-  # this is just a convenience to omit site-layout images from galleries
-  named_scope :furniture, {:conditions => 'assets.furniture = 1'}
-  named_scope :not_furniture, {:conditions => 'assets.furniture = 0 or assets.furniture is null'}
+  named_scope :others, lambda {{:conditions => AssetType.other_condition}}
+  named_scope :not_others, lambda {{:conditions => AssetType.non_other_condition}}
   named_scope :newest_first, { :order => 'created_at DESC'}
-  
-  def self.other_condition
-    send(:sanitize_sql, ['asset_content_type NOT IN (?)', self.mime_types_not_considered_other])
-  end
-
-  def self.mime_types_not_considered_other
-    Mime::IMAGE.all_types + Mime::AUDIO.all_types + Mime::MOVIE.all_types  
-  end
-    
-  class << self
-    def search(search, filter, page)
-      unless search.blank?
-
-        search_cond_sql = []
-        search_cond_sql << 'LOWER(asset_file_name) LIKE (:term)'
-        search_cond_sql << 'LOWER(title) LIKE (:term)'
-        search_cond_sql << 'LOWER(caption) LIKE (:term)'
-
-        cond_sql = search_cond_sql.join(" or ")
-
-        @conditions = [cond_sql, {:term => "%#{search.downcase}%" }]
-      else
-        @conditions = []
-      end
-
-      options = { :conditions => @conditions,
-                  :order => 'created_at DESC',
-                  :page => page,
-                  :per_page => 10 }
-
-      @file_types = filter.blank? ? [] : filter.keys
-      if not @file_types.empty?
-        options[:total_entries] = count_by_conditions
-        Asset.paginate_by_content_types(@file_types, :all, options )
-      else
-        Asset.paginate(:all, options)
-      end
-    end
-
-    def find_all_by_content_types(types, *args)
-      with_content_types(types) { find *args }
-    end
-
-    def with_content_types(types, &block)
-      with_scope(:find => { :conditions => types_to_conditions(types).join(' OR ') }, &block)
-    end
-    
-    def count_by_conditions
-      type_conditions = @file_types.blank? ? nil : Asset.types_to_conditions(@file_types.dup).join(" OR ")
-      @count_by_conditions ||= @conditions.empty? ? Asset.count(:all, :conditions => type_conditions) : Asset.count(:all, :conditions => @conditions)
-    end
-    
-    def types_to_conditions(types)
-      types.collect! { |t| '(' + send("#{t}_condition") + ')' }
-    end
-    
-    def thumbnail_sizes
-      if Radiant::Config.table_exists? && Radiant::Config["assets.additional_thumbnails"]
-        thumbnails = additional_thumbnails
-      else
-        thumbnails = {}
-      end
-      thumbnails[:icon] = ['42x42#', :png]
-      thumbnails[:thumbnail] = ['100x100>', :png]
-      thumbnails
-    end
-
-    def thumbnail_names
-      thumbnail_sizes.keys
-    end
-    
-    # returns a descriptive list suitable for use as options in a select box
-    
-    def thumbnail_options
-      asset_sizes = thumbnail_sizes.collect{|k,v| 
-        size_id = k
-        size_description = "#{k}: "
-        size_description << (v.is_a?(Array) ? v.join(' as ') : v)
-        [size_description, size_id] 
-      }.sort_by{|pair| pair.last.to_s}
-      asset_sizes.unshift ['Original (as uploaded)', 'original']
-      asset_sizes
-    end
-    
-    # this is just a pointer that can be alias-chained in other extensions to add to or replace the list of thumbnail mechanisms
-    # its invocation is delayed with a lambda in has_attached_file so that it isn't called when the extension loads, but when an attachment initializes:
-    # that way we can be sure that all the related extensions have loaded and all the alias_chains are in place.
-    
-    def thumbnail_definitions
-      thumbnail_sizes
-    end
-
-    def thumbnail_dimensions(size)
-      if style = thumbnail_sizes[size]
-        style.is_a?(Array) ? style.first : style
-      end
-    end
-
-    def thumbnail_format(size)
-      if style = thumbnail_sizes(size)
-        style.last if style.is_a?(Array)
-      end
-    end
-
-  private
-    def additional_thumbnails
-      Radiant::Config["assets.additional_thumbnails"].gsub(' ','').split(',').collect{|s| s.split('=')}.inject({}) {|ha, (k, v)| ha[k.to_sym] = v; ha}
-    end
-  end
-  
-  # order_by 'title'
 
   has_many :page_attachments, :dependent => :destroy
   has_many :pages, :through => :page_attachments
@@ -185,8 +10,8 @@ class Asset < ActiveRecord::Base
   belongs_to :updated_by, :class_name => 'User'
   
   has_attached_file :asset,
-                    :processors => lambda {|instance| instance.choose_processors },   # this allows us to set processors per file type, and to add more in other extensions
-                    :styles => lambda { thumbnail_definitions },                      # and this lets extensions add thumbnailers (and also usefully defers the call)
+                    :processors => lambda {|instance| instance.paperclip_processors },
+                    :styles => lambda {|instance| instance.paperclip_styles },
                     :whiny_thumbnails => false,
                     :storage => Radiant::Config["assets.storage"] == "s3" ? :s3 : :filesystem, 
                     :s3_credentials => {
@@ -205,15 +30,15 @@ class Asset < ActiveRecord::Base
     :content_type => Radiant::Config["assets.content_types"].gsub(' ','').split(',') if Radiant::Config.table_exists? && Radiant::Config["assets.content_types"] && Radiant::Config["assets.skip_filetype_validation"] == nil
   validates_attachment_size :asset, 
     :less_than => Radiant::Config["assets.max_asset_size"].to_i.megabytes if Radiant::Config.table_exists? && Radiant::Config["assets.max_asset_size"]
-  
-  register_type :image, %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif]
-  register_type :video, %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
-  register_type :audio, %w[audio/mpeg audio/mpg audio/ogg application/ogg audio/x-ms-wma audio/vnd.rn-realaudio audio/x-wav]
-  register_type :swf, %w[application/x-shockwave-flash]
-  register_type :pdf, %w[application/pdf]
 
-  # alias for backwards-compatibility: movie can be video or swf
-  register_type :movie, Mime::SWF.all_types + Mime::VIDEO.all_types
+  def asset_type
+    AssetType.from(asset_content_type)
+  end
+  delegate :paperclip_processors, :paperclip_styles, :style_dimensions, :style_format, :to => :asset_type
+
+  def other?
+    asset_type.nil?
+  end
 
   def thumbnail(size='original')
     return asset.url if size == 'original'
@@ -228,24 +53,6 @@ class Asset < ActiveRecord::Base
       self.asset.url(size.to_sym)
     end
   end
-  
-  def generate_style(name, args={}) 
-    size = args[:size] 
-    format = args[:format] || :jpg
-    asset = self.asset
-    unless asset.exists?(name.to_sym)
-      self.asset.styles[name.to_sym] = { :geometry => size, :format => format, :whiny => true, :convert_options => "", :processors => [:thumbnail] } 
-      self.asset.reprocess!
-    end
-  end
-  
-  # this has been added to support other extensions that want to add processors 
-  # eg paperclipped_gps uses gpsbabel in the same way as paperclipped uses imagemagick
-  # I also mean to add a video thumbnailer using ffmpeg 
-  
-  def choose_processors
-    [:thumbnail]
-  end
 
   def basename
     File.basename(asset_file_name, ".*") if asset_file_name
@@ -255,29 +62,29 @@ class Asset < ActiveRecord::Base
     asset_file_name.split('.').last.downcase if asset_file_name
   end
 
-  # we should be able to avoid going back to the file
-  def geometry(size='original')
-    if size == 'original'
+  # we avoid going back to the file so as not to block page requests with imagemagick calls
+  def geometry(style_name='original')
+    if style_name == 'original'
       Paperclip::Geometry.parse("#{original_width}x#{original_height}")
     else
-      Paperclip::Geometry.parse(self.class.thumbnail_dimensions(size))
+      Paperclip::Geometry.parse(style_dimensions(style_name))
     end
   end
-  
+
   def geometry_from_file
     Paperclip::Geometry.from_file(asset.path)
   rescue Paperclip::NotIdentifiedByImageMagickError
     Paperclip::Geometry.parse("0x0")
   end
-  
+
   def width(size='original')
     image? ? geometry(size).width : 0
   end
-  
+
   def height(size='original')
     image? ? geometry(size).height : 0
   end
-  
+
   def square?(size='original')
     image? && geometry(size).square?
   end
@@ -302,9 +109,64 @@ private
       self.original_height = geometry.height
       self.original_extension = extension
       true
-    else
-      false
     end
+  rescue
+    false
+  end
+
+  class << self
+    def known_types
+      AssetType.known_types
+    end
+    
+    def search(search, filter, page)
+      unless search.blank?
+
+        search_cond_sql = []
+        search_cond_sql << 'LOWER(asset_file_name) LIKE (:term)'
+        search_cond_sql << 'LOWER(title) LIKE (:term)'
+        search_cond_sql << 'LOWER(caption) LIKE (:term)'
+        cond_sql = search_cond_sql.join(" OR ")
+
+        @conditions = [cond_sql, {:term => "%#{search.downcase}%" }]
+      else
+        @conditions = []
+      end
+
+      options = { :conditions => @conditions,
+                  :order => 'created_at DESC',
+                  :page => page,
+                  :per_page => 10 }
+
+      @asset_types = filter.blank? ? [] : filter.keys
+      unless @asset_types.empty?
+        options[:total_entries] = count_with_asset_types(@asset_types, :conditions => @conditions)
+        Asset.paginate_by_asset_types(@asset_types, :all, options )
+      else
+        Asset.paginate(:all, options)
+      end
+    end
+
+    def find_all_by_asset_types(asset_types, *args)
+      with_asset_types(asset_types) { find *args }
+    end
+    
+    def count_with_asset_types(asset_types, *args)
+      with_asset_types(asset_types) { count *args }
+    end
+    
+    def with_asset_types(asset_types, &block)
+      with_scope(:find => { :conditions => AssetType.conditions_for(asset_types) }, &block)
+    end
+    
+  end
+
+  def self.eigenclass
+    class << self; self; end    # returns the return value of class << self block, which is self (as defined within that block)
+  end
+
+  def self.define_class_method(name, &block)
+    eigenclass.send :define_method, name, &block
   end
 
 end
