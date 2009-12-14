@@ -158,7 +158,6 @@ private
     def with_asset_types(asset_types, &block)
       with_scope(:find => { :conditions => AssetType.conditions_for(asset_types) }, &block)
     end
-    
   end
 
   def self.eigenclass
