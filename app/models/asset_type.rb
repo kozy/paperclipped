@@ -96,11 +96,12 @@ class AssetType
   end
     
   def self.mime_types_for(*names)
-    names.collect{|name| find(name).mime_types }.flatten
+    names.collect{ |name| find(name).mime_types }.flatten
   end
 
   def self.conditions_for(*names)
-    names.map{|name| find(name).condition }.join(' OR ')
+    Rails.logger.warn "conditions_for #{names.inspect}"
+    names.collect{ |name| ActiveRecord::Base.sanitize_sql_array(find(name).condition) }.join(' OR ')
   end
 
   def self.non_other_condition
