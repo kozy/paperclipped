@@ -50,13 +50,13 @@ class AssetType
   end
 
   def style_dimensions(style_name)
-    if style = paperclip_styles[style_name.intern]
+    if style = paperclip_styles[style_name.to_sym]
       style.is_a?(Array) ? style.first : style
     end
   end
   
   def style_format(style_name)
-    if style = paperclip_styles[style_name.intern]
+    if style = paperclip_styles[style_name.to_sym]
       style.last if style.is_a?(Array)
     end
   end
