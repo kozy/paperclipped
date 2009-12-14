@@ -29,6 +29,10 @@ class AssetType
       self.class.other_condition
     end
   end
+  
+  def sanitized_condition
+    ActiveRecord::Base.send :sanitize_sql_array, condition
+  end
 
   def non_condition
     if @mimes.any?
@@ -36,6 +40,10 @@ class AssetType
     else
       self.class.non_other_condition
     end
+  end
+
+  def sanitized_non_condition
+    ActiveRecord::Base.send :sanitize_sql_array, non_condition
   end
 
   def mime_types
@@ -80,11 +88,11 @@ class AssetType
   end
   
   def self.known?(name)
-    !@@types[name].nil?
+    !@@types[name.to_sym].nil?
   end
 
   def self.find(name)
-    @@types[name]
+    @@types[name.to_sym]
   end
   
   def self.known_types
@@ -99,9 +107,9 @@ class AssetType
     names.collect{ |name| find(name).mime_types }.flatten
   end
 
-  def self.conditions_for(*names)
+  def self.conditions_for(names)
     Rails.logger.warn "conditions_for #{names.inspect}"
-    names.collect{ |name| ActiveRecord::Base.sanitize_sql_array(find(name).condition) }.join(' OR ')
+    names.collect{ |name| self.find(name).sanitized_condition }.join(' OR ')
   end
 
   def self.non_other_condition

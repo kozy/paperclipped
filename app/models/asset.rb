@@ -150,6 +150,7 @@ private
     end
     
     def with_asset_types(asset_types, &block)
+      Rails.logger.warn "with_asset_types #{asset_types.inspect}"
       with_scope(:find => { :conditions => AssetType.conditions_for(asset_types) }, &block)
     end
   end
