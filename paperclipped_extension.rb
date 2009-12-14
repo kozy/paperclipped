@@ -49,6 +49,8 @@ class PaperclippedExtension < Radiant::Extension
     # alias for backwards-compatibility: movie could previously be either video or flash.
     # (existing mime-type lookup table is not affected but methods like Asset#movie? are created)
     AssetType.new :movie, :mime_types => AssetType.mime_types_for(:video, :swf)
+    # a type with no mime-types is assumed to mean 'everything else'
+    AssetType.new :other
     
     unless defined? admin.asset # UI is a singleton and already loaded
       Radiant::AdminUI.send :include, AssetsAdminUI

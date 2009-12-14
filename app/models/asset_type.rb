@@ -1,8 +1,8 @@
 class AssetType
   @@types = {}
   @@mime_lookup = {}
-  
-  attr_reader :name, :processors, :styles
+  @@default_type = nil
+  attr_reader :name, :processors, :styles, :catchall
   
   def initialize(name, options = {})
     options = options.symbolize_keys
@@ -10,24 +10,32 @@ class AssetType
     @processors = options[:processors]
     @styles = options[:styles] || {}
     @mimes = options[:mime_types] || []
-    @mimes.each do |mimetype|
-       @@mime_lookup[mimetype] ||= self
+    if @mimes.any?
+      @mimes.each { |mimetype| @@mime_lookup[mimetype] ||= self }
     end
     this = self
     Asset.send :define_method, "#{name}?".intern do asset_type.name == this.name end 
     Asset.send :define_class_method, "#{name}_condition".intern do this.condition; end
     Asset.send :define_class_method, "not_#{name}_condition".intern do this.non_condition; end
     Asset.send :named_scope, name.to_s.pluralize.intern, :conditions => condition
-    Asset.send :named_scope, "not_#{name.to_s.pluralize}".intern, :conditions => condition
+    Asset.send :named_scope, "not_#{name.to_s.pluralize}".intern, :conditions => non_condition
     @@types[@name] = self
   end
 
   def condition
-    ["asset_content_type IN (#{@mimes.map{'?'}.join(',')})", *@mimes]
+    if @mimes.any?
+      ["asset_content_type IN (#{@mimes.map{'?'}.join(',')})", *@mimes]
+    else
+      self.class.other_condition
+    end
   end
 
   def non_condition
-    ["NOT asset_content_type IN (#{@mimes.map{'?'}.join(',')})", *@mimes]
+    if @mimes.any?
+      ["NOT asset_content_type IN (#{@mimes.map{'?'}.join(',')})", *@mimes]
+    else
+      self.class.non_other_condition
+    end
   end
 
   def mime_types
@@ -62,9 +70,13 @@ class AssetType
   end
 
   # class methods
-
+  
   def self.from(mimetype)
-    @@mime_lookup[mimetype]
+    @@mime_lookup[mimetype] || catchall
+  end
+  
+  def self.catchall
+    @@default_type ||= new :other
   end
   
   def self.known?(name)

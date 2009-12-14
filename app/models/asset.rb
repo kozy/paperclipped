@@ -1,6 +1,4 @@
 class Asset < ActiveRecord::Base
-  named_scope :others, lambda {{:conditions => AssetType.other_condition}}
-  named_scope :not_others, lambda {{:conditions => AssetType.non_other_condition}}
   named_scope :newest_first, { :order => 'created_at DESC'}
 
   has_many :page_attachments, :dependent => :destroy
@@ -10,8 +8,12 @@ class Asset < ActiveRecord::Base
   belongs_to :updated_by, :class_name => 'User'
   
   has_attached_file :asset,
-                    :processors => lambda {|instance| instance.paperclip_processors },
-                    :styles => lambda {|instance| instance.paperclip_styles },
+                    :processors => lambda {|attachment| 
+                      attachment.instance.paperclip_processors 
+                    },
+                    :styles => lambda {|attachment| 
+                      attachment.instance.paperclip_styles 
+                    },
                     :whiny_thumbnails => false,
                     :storage => Radiant::Config["assets.storage"] == "s3" ? :s3 : :filesystem, 
                     :s3_credentials => {
@@ -36,22 +38,14 @@ class Asset < ActiveRecord::Base
   end
   delegate :paperclip_processors, :paperclip_styles, :style_dimensions, :style_format, :to => :asset_type
 
-  def other?
-    asset_type.nil?
+  def thumbnail(style_name='original')
+    return asset.url if style_name == 'original'
+    return asset.url(style_name.to_sym) if has_style?(style_name)
+    return "/images/assets/#{asset_type.name}_#{style_name.to_s}.png"
   end
-
-  def thumbnail(size='original')
-    return asset.url if size == 'original'
-    case 
-      when self.pdf?   : "/images/assets/pdf_#{size.to_s}.png"
-      when self.movie? : "/images/assets/movie_#{size.to_s}.png"
-      when self.video? : "/images/assets/movie_#{size.to_s}.png"
-      when self.swf? : "/images/assets/movie_#{size.to_s}.png" #TODO: special icon for swf-files
-      when self.audio? : "/images/assets/audio_#{size.to_s}.png"
-      when self.other? : "/images/assets/doc_#{size.to_s}.png"
-    else
-      self.asset.url(size.to_sym)
-    end
+  
+  def has_style?(style_name)
+    paperclip_styles.keys.include?(style_name)
   end
 
   def basename
@@ -77,24 +71,24 @@ class Asset < ActiveRecord::Base
     Paperclip::Geometry.parse("0x0")
   end
 
-  def width(size='original')
-    image? ? geometry(size).width : 0
+  def width(style_name='original')
+    image? ? geometry(style_name).width : 0
   end
 
-  def height(size='original')
-    image? ? geometry(size).height : 0
+  def height(style_name='original')
+    image? ? geometry(style_name).height : 0
   end
 
-  def square?(size='original')
-    image? && geometry(size).square?
+  def square?(style_name='original')
+    image? && geometry(style_name).square?
   end
 
-  def vertical?(size='original')
-    image? && geometry(size).vertical?
+  def vertical?(style_name='original')
+    image? && geometry(style_name).vertical?
   end
 
-  def horizontal?(size='original')
-    image? && geometry(size).horizontal?
+  def horizontal?(style_name='original')
+    image? && geometry(style_name).horizontal?
   end
   
 private
