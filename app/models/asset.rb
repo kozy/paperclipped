@@ -45,7 +45,7 @@ class Asset < ActiveRecord::Base
   end
   
   def has_style?(style_name)
-    paperclip_styles.keys.include?(style_name)
+    paperclip_styles.keys.include?(style_name.to_sym)
   end
 
   def basename
@@ -161,6 +161,31 @@ private
 
   def self.define_class_method(name, &block)
     eigenclass.send :define_method, name, &block
+  end
+  
+  # compatibility
+  
+  def self.thumbnail_sizes
+    AssetType.find(:image).paperclip_styles
+  end
+  
+  def self.thumbnail_names
+    thumbnail_sizes.keys
+  end
+
+  def self.thumbnail_options
+    AssetType.find(:image).paperclip_styles.keys
+  end
+  
+  def self.thumbnail_options
+    asset_sizes = thumbnail_sizes.collect{|k,v| 
+      size_id = k
+      size_description = "#{k}: "
+      size_description << (v.is_a?(Array) ? v.join(' as ') : v)
+      [size_description, size_id] 
+    }.sort_by{|pair| pair.last.to_s}
+    asset_sizes.unshift ['Original (as uploaded)', 'original']
+    asset_sizes
   end
 
 end
