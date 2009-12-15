@@ -1,5 +1,4 @@
 class Asset < ActiveRecord::Base
-  named_scope :newest_first, { :order => 'created_at DESC'}
 
   has_many :page_attachments, :dependent => :destroy
   has_many :pages, :through => :page_attachments
@@ -8,12 +7,8 @@ class Asset < ActiveRecord::Base
   belongs_to :updated_by, :class_name => 'User'
   
   has_attached_file :asset,
-                    :processors => lambda {|attachment| 
-                      attachment.instance.paperclip_processors 
-                    },
-                    :styles => lambda {|attachment| 
-                      attachment.instance.paperclip_styles 
-                    },
+                    :processors => lambda { |attachment| attachment.instance.paperclip_processors },
+                    :styles => lambda { |attachment| attachment.instance.paperclip_styles },
                     :whiny_thumbnails => false,
                     :storage => Radiant::Config["assets.storage"] == "s3" ? :s3 : :filesystem, 
                     :s3_credentials => {
@@ -69,6 +64,18 @@ class Asset < ActiveRecord::Base
     Paperclip::Geometry.from_file(asset.path)
   rescue Paperclip::NotIdentifiedByImageMagickError
     Paperclip::Geometry.parse("0x0")
+  end
+
+  def aspect(style_name='original')
+    image? && geometry(style_name).aspect
+  end
+
+  def shape(style_name='original')
+    if image?
+      return 'horizontal' if aspect > 1.0
+      return 'vertical' if aspect < 1.0
+      return 'square'
+    end
   end
 
   def width(style_name='original')
@@ -150,7 +157,6 @@ private
     end
     
     def with_asset_types(asset_types, &block)
-      Rails.logger.warn "with_asset_types #{asset_types.inspect}"
       with_scope(:find => { :conditions => AssetType.conditions_for(asset_types) }, &block)
     end
   end
@@ -163,7 +169,7 @@ private
     eigenclass.send :define_method, name, &block
   end
   
-  # compatibility
+  # backwards compatibility
   
   def self.thumbnail_sizes
     AssetType.find(:image).paperclip_styles

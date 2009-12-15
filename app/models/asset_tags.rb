@@ -1,5 +1,6 @@
 module AssetTags
   include Radiant::Taggable
+  include ActionView::Helpers::NumberHelper
   
   class TagError < StandardError; end
   
@@ -17,7 +18,7 @@ module AssetTags
 
   desc %{
     Cycles through all assets attached to the current page.  
-    This tag does not require the title atttribute, nor do any of its children.
+    This tag does not require the title attribute, nor do any of its children.
     Use the `limit' and `offset` attribute to render a specific number of assets.
     Use `by` and `order` attributes to control the order of assets.
     Use `extensions` attribute to specify which assets to be rendered.
@@ -129,6 +130,15 @@ module AssetTags
     end
   end
 
+  desc %{
+    Returns 'vertical', 'horizontal' or 'square', provided the asset is an image.
+  }
+  tag "assets:shape" do |tag|
+    options = tag.attr.dup
+    tag.locals.asset = find_asset(tag, options)
+    tag.locals.asset.shape
+  end
+
   ['vertical','horizontal', 'square'].each do |property|
     desc %{
       Expands only if the asset is an image and the image file is #{property}.
@@ -147,6 +157,15 @@ module AssetTags
       tag.locals.asset = find_asset(tag, options)
       tag.expand if !tag.locals.asset.image? || !tag.locals.asset.send("#{property}?".intern)
     end
+  end
+  
+  desc %{
+    Returns 'vertical', 'horizontal' or 'square', provided the asset is an image.
+  }
+  tag "assets:filesize" do |tag|
+    options = tag.attr.dup
+    asset = find_asset(tag, options)
+    number_to_human_size(asset.asset_file_size, :precision => 2)
   end
 
   desc %{
@@ -196,17 +215,13 @@ module AssetTags
     asset = find_asset(tag, options)
     if asset.image?
       size = options['size'] ? options.delete('size') : 'original'
-      # geometry = options['geometry'] ? options.delete('geometry') : nil
-      # This is very exoerimental and will generate new sizes on the fly
-      # asset.generate_style(size, { :size => geometry }) if geometry
-      
       alt = " alt='#{asset.title}'" unless tag.attr['alt'] rescue nil
       attributes = options.inject('') { |s, (k, v)| s << %{#{k.downcase}="#{v}" } }.strip
       attributes << alt unless alt.nil?
       url = asset.thumbnail(size)
       %{<img src="#{url}" #{attributes unless attributes.empty?} />} rescue nil
     else
-      raise TagError, "Asset is not an image"
+      raise TagError, "Asset #{asset.id} is not an image"
     end
   end
   desc %{

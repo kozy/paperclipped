@@ -8,7 +8,7 @@ I've just refactored the Asset machinery, with these goals:
 * to support the definition of styles and processors per file type, rather than for all Assets at once
 * to move structural information (like the definition of asset types) into the extension rather than the model class
 * to make the Asset class more readable (and to make it read more like a normal ActiveRecord class)
-* to replace the Mime::Types machinery which I don't think was necessary
+* to replace the Mime::Types machinery which I think was more than we really needed
 * to stop paperclipped dropping quite so many warnings in the logs
 * to make it (much) easier for me to write other extensions that extend paperclipped functionality
 
