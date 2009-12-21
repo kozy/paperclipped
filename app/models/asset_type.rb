@@ -108,7 +108,6 @@ class AssetType
   end
 
   def self.conditions_for(names)
-    Rails.logger.warn "conditions_for #{names.inspect}"
     names.collect{ |name| self.find(name).sanitized_condition }.join(' OR ')
   end
 

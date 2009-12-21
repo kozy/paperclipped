@@ -7,8 +7,12 @@ class Asset < ActiveRecord::Base
   belongs_to :updated_by, :class_name => 'User'
   
   has_attached_file :asset,
-                    :processors => lambda { |attachment| attachment.instance.paperclip_processors },
-                    :styles => lambda { |attachment| attachment.instance.paperclip_styles },
+                    :styles => lambda { |attachment|
+                      AssetType.from(attachment.instance_read(:content_type)).paperclip_styles
+                    },
+                    :processors => lambda { |asset| 
+                      asset.paperclip_processors 
+                    },
                     :whiny_thumbnails => false,
                     :storage => Radiant::Config["assets.storage"] == "s3" ? :s3 : :filesystem, 
                     :s3_credentials => {
@@ -29,12 +33,12 @@ class Asset < ActiveRecord::Base
     :less_than => Radiant::Config["assets.max_asset_size"].to_i.megabytes if Radiant::Config.table_exists? && Radiant::Config["assets.max_asset_size"]
 
   def asset_type
-    AssetType.from(asset_content_type)
+    AssetType.from(asset.content_type)
   end
   delegate :paperclip_processors, :paperclip_styles, :style_dimensions, :style_format, :to => :asset_type
 
   def thumbnail(style_name='original')
-    return asset.url if style_name == 'original'
+    return asset.url if style_name.to_sym == :original
     return asset.url(style_name.to_sym) if has_style?(style_name)
     return "/images/assets/#{asset_type.name}_#{style_name.to_s}.png"
   end
@@ -179,10 +183,6 @@ private
     thumbnail_sizes.keys
   end
 
-  def self.thumbnail_options
-    AssetType.find(:image).paperclip_styles.keys
-  end
-  
   def self.thumbnail_options
     asset_sizes = thumbnail_sizes.collect{|k,v| 
       size_id = k
