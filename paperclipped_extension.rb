@@ -41,7 +41,7 @@ class PaperclippedExtension < Radiant::Extension
   end
   
   def activate
-    Paperclip.options[:image_magick_path] = IMAGE_MAGICK_PATH if defined? IMAGE_MAGICK_PATH
+    Paperclip.options[:command_path] = IMAGE_MAGICK_PATH if defined? IMAGE_MAGICK_PATH
     AssetType.new :image, :mime_types => %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif], :processors => [:thumbnail], :styles => {:icon => ['42x42#', :png], :thumbnail => ['100x100>', :png]}
     AssetType.new :video, :mime_types => %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
     AssetType.new :audio, :mime_types => %w[audio/mpeg audio/mpg audio/ogg application/ogg audio/x-ms-wma audio/vnd.rn-realaudio audio/x-wav]
@@ -72,11 +72,6 @@ class PaperclippedExtension < Radiant::Extension
     }
 
     UserActionObserver.instance.send :add_observer!, Asset 
-    
-    # This is just needed for testing if you are using mod_rails
-    if Radiant::Config.table_exists? && Radiant::Config["assets.image_magick_path"]
-      Paperclip.options[:command_path] = Radiant::Config["assets.image_magick_path"]
-    end
     
     admin.tabs.add "Assets", "/admin/assets", :after => "Snippets", :visibility => [:all]
   end
