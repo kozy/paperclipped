@@ -2,6 +2,7 @@ class Asset < ActiveRecord::Base
 
   has_many :page_attachments, :dependent => :destroy
   has_many :pages, :through => :page_attachments
+  has_site if respond_to? :has_site
 
   belongs_to :created_by, :class_name => 'User'
   belongs_to :updated_by, :class_name => 'User'

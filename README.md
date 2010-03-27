@@ -12,9 +12,9 @@ I've just refactored the Asset machinery, with these goals:
 * to stop paperclipped dropping quite so many warnings in the logs
 * to make it (much) easier for me to write other extensions that extend paperclipped functionality
 
-The only real change is the creation of an AssetType class to take over the remembering of mime types and the construction of SQL. I hope you agree it reads a lot better now: I'm already finding it easier to work with.
+I've also had some changes incorporated into paperclip to make it handle deferred style definitions more consistently (by factoring out a Style class): those have been pulled in but not yet released as a gem.
 
-will at spanner, 13/12/09
+Also, this fork is automatically multi-sited if run alongside the sites extension.
 
 
 ## IMPORTANT!
