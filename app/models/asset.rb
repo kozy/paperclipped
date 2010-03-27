@@ -14,7 +14,7 @@ class Asset < ActiveRecord::Base
                     :processors => lambda { |asset| 
                       asset.paperclip_processors 
                     },
-                    :whiny_thumbnails => false,
+                    :whiny => false,
                     :storage => Radiant::Config["assets.storage"] == "s3" ? :s3 : :filesystem, 
                     :s3_credentials => {
                       :access_key_id => Radiant::Config["assets.s3.key"],
@@ -25,7 +25,7 @@ class Asset < ActiveRecord::Base
                     :path => Radiant::Config["assets.path"] ? Radiant::Config["assets.path"] : ":rails_root/public/:class/:id/:basename:no_original_style.:extension"
 
   before_save :assign_title
-  after_post_process :note_dimensions
+  before_update :clear_dimensions
                                  
   validates_attachment_presence :asset, :message => "You must choose a file to upload!"
   validates_attachment_content_type :asset, 
@@ -56,19 +56,28 @@ class Asset < ActiveRecord::Base
     asset_file_name.split('.').last.downcase if asset_file_name
   end
 
-  # we avoid going back to the file so as not to block page requests with imagemagick calls
   def geometry(style_name='original')
     if style_name == 'original'
-      Paperclip::Geometry.parse("#{original_width}x#{original_height}")
+      geometry = lazy_load_dimensions
     else
       Paperclip::Geometry.parse(style_dimensions(style_name))
     end
   end
 
-  def geometry_from_file
-    Paperclip::Geometry.from_file(asset.path)
-  rescue Paperclip::NotIdentifiedByImageMagickError
-    Paperclip::Geometry.parse("0x0")
+  def lazy_load_dimensions
+    if image?
+      if original_width.blank? || original_height.blank?
+        geometry = Paperclip::Geometry.from_file(asset.path)
+        self.update_attributes(
+          :original_width => geometry.width,
+          :original_height => geometry.height,
+          :original_extension => extension
+        )
+        geometry
+      else
+        Paperclip::Geometry.parse("#{original_width}x#{original_height}")
+      end
+    end
   end
 
   def aspect(style_name='original')
@@ -109,15 +118,15 @@ private
     self.title = basename if title.blank?
   end
   
-  def note_dimensions
-    if image? && (geometry = geometry_from_file)
-      self.original_width = geometry.width
-      self.original_height = geometry.height
-      self.original_extension = extension
-      true
+  # it's difficult to post-process an asset correctly because we don't know whether paperclip's write queue has been flushed
+  # so we just clear the dimensions here, then read them back in on the first call to `geometry`, if that ever happens.
+  
+  def clear_dimensions
+    if asset.dirty?
+      self.original_width = nil
+      self.original_height = nil
+      self.extension = nil
     end
-  rescue
-    false
   end
 
   class << self
@@ -166,12 +175,14 @@ private
     end
   end
 
-  def self.eigenclass
-    class << self; self; end    # returns the return value of class << self block, which is self (as defined within that block)
-  end
-
+  # called from AssetType to set type_condition? methods on Asset
   def self.define_class_method(name, &block)
     eigenclass.send :define_method, name, &block
+  end
+
+  # returns the return value of class << self block, which is self (as defined within that block)
+  def self.eigenclass
+    class << self; self; end
   end
   
   # backwards compatibility
@@ -183,6 +194,8 @@ private
   def self.thumbnail_names
     thumbnail_sizes.keys
   end
+  
+  # this is a convenience for image-pickers (that used to exist but I think currently don't)
 
   def self.thumbnail_options
     asset_sizes = thumbnail_sizes.collect{|k,v| 
