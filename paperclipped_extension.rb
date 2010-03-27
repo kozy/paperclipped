@@ -41,6 +41,7 @@ class PaperclippedExtension < Radiant::Extension
   end
   
   def activate
+    Paperclip.options[:image_magick_path] = IMAGE_MAGICK_PATH if defined? IMAGE_MAGICK_PATH
     AssetType.new :image, :mime_types => %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif], :processors => [:thumbnail], :styles => {:icon => ['42x42#', :png], :thumbnail => ['100x100>', :png]}
     AssetType.new :video, :mime_types => %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
     AssetType.new :audio, :mime_types => %w[audio/mpeg audio/mpg audio/ogg application/ogg audio/x-ms-wma audio/vnd.rn-realaudio audio/x-wav]
