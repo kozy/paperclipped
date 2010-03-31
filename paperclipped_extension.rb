@@ -77,13 +77,7 @@ class PaperclippedExtension < Radiant::Extension
       Paperclip.options[:command_path] = Radiant::Config["assets.image_magick_path"]
     end
     
-    if respond_to?(:tab)
-      tab("Content") do
-        add_item("Assets", "/admin/assets", :after => "Snippets", :visibility => [:all])
-      end
-    else
-      admin.tabs.add "Assets", "/admin/assets", :after => "Snippets", :visibility => [:all]
-    end
+    admin.tabs.add "Assets", "/admin/assets", :after => "Snippets", :visibility => [:all]
   end
   
   def deactivate
