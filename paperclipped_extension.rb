@@ -73,7 +73,13 @@ class PaperclippedExtension < Radiant::Extension
 
     UserActionObserver.instance.send :add_observer!, Asset 
     
-    admin.tabs.add "Assets", "/admin/assets", :after => "Snippets", :visibility => [:all]
+    if respond_to?(:tab)
+      tab("Content") do
+        add_item("Assets", "/admin/assets", :after => "Snippets", :visibility => [:all])
+      end
+    else
+      admin.tabs.add "Assets", "/admin/assets", :after => "Snippets", :visibility => [:all]
+    end
   end
   
   def deactivate
