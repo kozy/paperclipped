@@ -75,7 +75,7 @@ class PaperclippedExtension < Radiant::Extension
     
     if respond_to?(:tab)
       tab("Content") do
-        add_item("Assets", "/admin/assets", :after => "Snippets"
+        add_item("Assets", "/admin/assets", :after => "Snippets")
       end
     else
       admin.tabs.add "Assets", "/admin/assets", :after => "Snippets", :visibility => [:all]
