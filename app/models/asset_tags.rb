@@ -5,6 +5,41 @@ module AssetTags
   class TagError < StandardError; end
   
   desc %{
+    Use r:all_assets to build a list of every asset available on the site. 
+    Use r:assets to build a list of assets attached to the present page.
+    The syntax is similar and in both cases you will usually want to loop 
+    through the list with :each.
+    
+    *Usage:* 
+    <pre><code><r:all_assets:each>...</r:all_assets:each></code></pre>
+  }    
+  tag 'all_assets' do |tag|
+    tag.locals.asset = Asset.all
+    tag.expand
+  end
+
+  desc %{
+    Cycles through all assets available on the site.  
+    This tag does not require the title attribute, nor do any of its children.
+    Use the `limit' and `offset` attribute to render a specific number of assets.
+    Use `by` and `order` attributes to control the order of assets.
+    Use `extensions` attribute to specify which assets to be rendered.
+    
+    *Usage:* 
+    <pre><code><r:all_assets:each [limit=0] [offset=0] [order="asc|desc"] [by="position|title|..."] [extensions="png|pdf|doc"]>...</r:all_assets:each></code></pre>
+  }    
+  tag 'all_assets:each' do |tag|
+    options = tag.attr.dup
+    result = []
+    assets = Asset.find(:all, assets_find_options(tag))
+    assets.each do |asset|
+      tag.locals.asset = asset
+      result << tag.expand
+    end
+    result
+  end
+
+  desc %{
     The namespace for referencing images and assets.  You may specify the 'title'
     attribute on this tag for all contained tags to refer to that asset.  
     
