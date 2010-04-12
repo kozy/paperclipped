@@ -42,6 +42,9 @@ class PaperclippedExtension < Radiant::Extension
   
   def activate
     Paperclip.options[:command_path] = IMAGE_MAGICK_PATH if defined? IMAGE_MAGICK_PATH
+    Page.send :include, PaginatedPage
+    SiteController.send :include, SitePagination
+    
     Page.class_eval {
       include PageAssetAssociations
       include AssetTags

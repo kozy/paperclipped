@@ -11,7 +11,6 @@ module AssetTypeTags
   tag 'asset_list' do |tag|
     raise TagError, "r:asset_list: no assets to list" unless tag.locals.assets
     result = []
-    tag.locals.assets = tag.locals.assets.find(:all, asset_type_find_options(tag))
     tag.locals.assets.each do |asset|
       tag.locals.asset = asset
       result << tag.expand
@@ -35,10 +34,10 @@ module AssetTypeTags
           <pre><code><r:assets:all_#{type.plural}:each>...</r:assets:all_#{type.plural}:each></code></pre>
         }
         tag "assets:all_#{type.plural}" do |tag|
-          tag.locals.assets = Asset.send(type.plural.intern)
           tag.expand
         end
         tag "assets:all_#{type.plural}:each" do |tag|
+          tag.locals.assets = Asset.send(type.plural.intern).scoped(asset_type_find_options(tag)).paginate(pagination_options)
           tag.render('asset_list', tag.attr.dup, &tag.block)
         end
 
@@ -50,10 +49,10 @@ module AssetTypeTags
           <pre><code><r:assets:all_non_#{type.plural}:each>...</r:assets:all_non_#{type.plural}:each></code></pre>
         }
         tag "assets:all_non_#{type.plural}" do |tag|
-          tag.locals.assets = Asset.send("non_#{type.plural}".intern)
           tag.expand
         end
         tag "assets:all_non_#{type.plural}:each" do |tag|
+          tag.locals.assets = Asset.send("all_non_#{type.plural}".intern).scoped(asset_type_find_options(tag)).paginate(pagination_options)
           tag.render('asset_list', tag.attr.dup, &tag.block)
         end
 
@@ -123,10 +122,25 @@ module AssetTypeTags
         }
         tag "assets:#{type.plural}" do |tag|
           raise TagError, "page must be defined for assets:#{type} tags" unless tag.locals.page
-          tag.locals.assets = tag.locals.page.assets.send(type.plural.intern)
           tag.expand
         end
         tag "assets:#{type.plural}:each" do |tag|
+          tag.locals.assets = tag.locals.page.assets.send(type.plural.intern).scoped(asset_type_find_options(tag))
+          tag.render('asset_list', tag.attr.dup, &tag.block)
+        end
+
+        desc %{
+          Loops through all the attached assets not of type #{type}. The usual order attributes are applied.
+
+          *Usage:* 
+          <pre><code><r:assets:non_#{type.plural}:each>...</r:assets:non_#{type.plural}:each></code></pre>
+        }
+        tag "assets:non_#{type.plural}" do |tag|
+          raise TagError, "page must be defined for assets:non_#{type} tags" unless tag.locals.page
+          tag.expand
+        end
+        tag "assets:#{type.plural}:each" do |tag|
+          tag.locals.assets = tag.locals.page.assets.send("non_#{type.plural}".intern).scoped(asset_type_find_options(tag))
           tag.render('asset_list', tag.attr.dup, &tag.block)
         end
 
