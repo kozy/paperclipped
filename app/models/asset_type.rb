@@ -19,7 +19,13 @@ class AssetType
     Asset.send :define_class_method, "not_#{name}_condition".intern do this.non_condition; end
     Asset.send :named_scope, name.to_s.pluralize.intern, :conditions => condition
     Asset.send :named_scope, "not_#{name.to_s.pluralize}".intern, :conditions => non_condition
+    
+    Page.define_radius_tags_for_asset_type self
     @@types[@name] = self
+  end
+  
+  def plural
+    name.to_s.pluralize
   end
 
   def condition
@@ -95,6 +101,10 @@ class AssetType
     @@types[name.to_sym]
   end
   
+  def self.all
+    @@types.values
+  end
+
   def self.known_types
     @@types.keys
   end

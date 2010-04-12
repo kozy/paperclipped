@@ -195,7 +195,7 @@ private
     thumbnail_sizes.keys
   end
   
-  # this is a convenience for image-pickers (that used to exist but I think currently don't)
+  # this is a convenience for image-pickers
 
   def self.thumbnail_options
     asset_sizes = thumbnail_sizes.collect{|k,v| 

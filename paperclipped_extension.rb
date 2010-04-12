@@ -42,6 +42,12 @@ class PaperclippedExtension < Radiant::Extension
   
   def activate
     Paperclip.options[:command_path] = IMAGE_MAGICK_PATH if defined? IMAGE_MAGICK_PATH
+    Page.class_eval {
+      include PageAssetAssociations
+      include AssetTags
+      include AssetTypeTags
+    }
+    # each AssetType defines its own processors, styles retrieval conditions, scopes and radius tags
     AssetType.new :image, :mime_types => %w[image/png image/x-png image/jpeg image/pjpeg image/jpg image/gif], :processors => [:thumbnail], :styles => {:icon => ['42x42#', :png], :thumbnail => ['100x100>', :png]}
     AssetType.new :video, :mime_types => %w[video/mpeg video/mp4 video/ogg video/quicktime video/x-ms-wmv video/x-flv]
     AssetType.new :audio, :mime_types => %w[audio/mpeg audio/mpg audio/ogg application/ogg audio/x-ms-wma audio/vnd.rn-realaudio audio/x-wav]
@@ -50,7 +56,7 @@ class PaperclippedExtension < Radiant::Extension
     # alias for backwards-compatibility: movie could previously be either video or flash.
     # (existing mime-type lookup table is not affected but methods like Asset#movie? are created)
     AssetType.new :movie, :mime_types => AssetType.mime_types_for(:video, :swf)
-    # a type with no mime-types is assumed to mean 'everything else'
+    # an AssetType declared with no mime-types is assumed to mean 'everything else'
     AssetType.new :other
     
     unless defined? admin.asset # UI is a singleton and already loaded
@@ -66,10 +72,6 @@ class PaperclippedExtension < Radiant::Extension
       admin.send(view).edit.asset_panes.concat %w{page_attachments upload search}
     end
     
-    Page.class_eval {
-      include PageAssetAssociations
-      include AssetTags
-    }
 
     UserActionObserver.instance.send :add_observer!, Asset 
     
