@@ -2,7 +2,7 @@ class Admin::AssetsController < Admin::ResourceController
   skip_before_filter :verify_authenticity_token, :only => :create
     
   def index 
-    @assets = Asset.search(params[:search], params[:filter], params[:page])
+    @assets = Asset.search(params[:search], params[:filter]).paginate(pagination_parameters)
     @page = Page.find(params[:asset_page]) if params[:asset_page]
 
     respond_to do |format|

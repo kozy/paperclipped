@@ -4,19 +4,6 @@ module AssetTypeTags
   
   class TagError < StandardError; end
   
-  # simple, general purpose asset lister, useful because the assets:each tag sets tags.local.assets
-  # and often we would rather use a collection that has already been selected
-  # tag.locals.assets should always contain an unfound scope when this tag is rendered
-
-  tag 'asset_list' do |tag|
-    raise TagError, "r:asset_list: no assets to list" unless tag.locals.assets
-    result = []
-    tag.locals.assets.each do |asset|
-      tag.locals.asset = asset
-      result << tag.expand
-    end 
-    result
-  end
   
   def self.included(base)
   
@@ -37,7 +24,11 @@ module AssetTypeTags
           tag.expand
         end
         tag "assets:all_#{type.plural}:each" do |tag|
-          tag.locals.assets = Asset.send(type.plural.intern).scoped(asset_type_find_options(tag)).paginate(pagination_options)
+          
+          Rails.logger.warn "@@  in assets:all_#{type.plural}:each, pagination is #{pagination.inspect}"
+          Rails.logger.warn "@@  in assets:all_#{type.plural}:each, paginated attribute is #{tag.attr['paginated'].inspect}"
+          
+          tag.locals.assets = Asset.send(type.plural.intern).scoped(asset_type_find_options(tag))
           tag.render('asset_list', tag.attr.dup, &tag.block)
         end
 
@@ -52,7 +43,7 @@ module AssetTypeTags
           tag.expand
         end
         tag "assets:all_non_#{type.plural}:each" do |tag|
-          tag.locals.assets = Asset.send("all_non_#{type.plural}".intern).scoped(asset_type_find_options(tag)).paginate(pagination_options)
+          tag.locals.assets = Asset.send("all_non_#{type.plural}".intern).scoped(asset_type_find_options(tag))
           tag.render('asset_list', tag.attr.dup, &tag.block)
         end
 

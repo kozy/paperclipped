@@ -1,6 +1,4 @@
-# require_dependency 'application_controller'
-# require File.dirname(__FILE__) + '/lib/url_additions'
-# include UrlAdditions
+require_dependency 'application_controller'
 
 class PaperclippedExtension < Radiant::Extension
   version "0.8.0"
@@ -42,9 +40,6 @@ class PaperclippedExtension < Radiant::Extension
   
   def activate
     Paperclip.options[:command_path] = IMAGE_MAGICK_PATH if defined? IMAGE_MAGICK_PATH
-    Page.send :include, PaginatedPage
-    SiteController.send :include, SitePagination
-    
     Page.class_eval {
       include PageAssetAssociations
       include AssetTags
@@ -75,7 +70,6 @@ class PaperclippedExtension < Radiant::Extension
       admin.send(view).edit.asset_panes.concat %w{page_attachments upload search}
     end
     
-
     UserActionObserver.instance.send :add_observer!, Asset 
     
     if respond_to?(:tab)

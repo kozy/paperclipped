@@ -31,12 +31,8 @@ module AssetTags
   tag 'assets:each' do |tag|
     options = tag.attr.dup
     result = []
-    assets = tag.locals.page.assets.find(:all, assets_find_options(tag))
-    assets.each do |asset|
-      tag.locals.asset = asset
-      result << tag.expand
-    end
-    result
+    tag.locals.assets = tag.locals.page.assets.scoped(assets_find_options(tag))
+    tag.render('asset_list', tag.attr.dup, &tag.block)
   end
   
   desc %{
@@ -358,6 +354,27 @@ module AssetTags
     asset.asset_file_name[/\.(\w+)$/, 1]
   end
   
+  # simple, general purpose asset lister, useful because the assets:each tag resets tag.local.assets
+  # and often we would rather use a collection that has already been selected
+  # tag.locals.assets would normally contain an unfound scope when this tag is rendered
+
+  tag 'asset_list' do |tag|
+    raise TagError, "r:asset_list: no assets to list" unless tag.locals.assets
+    options = tag.attr.symbolize_keys
+    result = []
+    pagination = pagination_control(tag)
+    assets = pagination ? tag.locals.assets.paginate(pagination) : tag.locals.assets.all
+    assets.each do |asset|
+      tag.locals.asset = asset
+      result << tag.expand
+    end
+    if pagination && assets.total_pages > 1
+      tag.locals.paginated_list = assets
+      result << tag.render('pagination')
+    end
+    result
+  end
+    
   private
     
     def find_asset(tag, options)

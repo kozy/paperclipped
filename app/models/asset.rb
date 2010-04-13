@@ -134,9 +134,10 @@ private
       AssetType.known_types
     end
     
-    def search(search, filter, page)
-      unless search.blank?
+    # pagination moved to the controller
 
+    def search(search, filter)
+      unless search.blank?
         search_cond_sql = []
         search_cond_sql << 'LOWER(asset_file_name) LIKE (:term)'
         search_cond_sql << 'LOWER(title) LIKE (:term)'
@@ -148,18 +149,9 @@ private
         @conditions = []
       end
 
-      options = { :conditions => @conditions,
-                  :order => 'created_at DESC',
-                  :page => page,
-                  :per_page => 10 }
-
-      @asset_types = filter.blank? ? [] : filter.keys
-      unless @asset_types.empty?
-        options[:total_entries] = count_with_asset_types(@asset_types, :conditions => @conditions)
-        Asset.paginate_by_asset_types(@asset_types, :all, options )
-      else
-        Asset.paginate(:all, options)
-      end
+      assets = Asset.scoped( :conditions => @conditions, :order => 'created_at DESC' )
+      assets = assets.scoped( :conditions => AssetType.conditions_for(filter.keys) ) unless filter.blank?
+      assets
     end
 
     def find_all_by_asset_types(asset_types, *args)
