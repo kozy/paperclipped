@@ -23,11 +23,7 @@ module AssetTypeTags
         tag "assets:all_#{type.plural}" do |tag|
           tag.expand
         end
-        tag "assets:all_#{type.plural}:each" do |tag|
-          
-          Rails.logger.warn "@@  in assets:all_#{type.plural}:each, pagination is #{pagination.inspect}"
-          Rails.logger.warn "@@  in assets:all_#{type.plural}:each, paginated attribute is #{tag.attr['paginated'].inspect}"
-          
+        tag "assets:all_#{type.plural}:each" do |tag|          
           tag.locals.assets = Asset.send(type.plural.intern).scoped(asset_type_find_options(tag))
           tag.render('asset_list', tag.attr.dup, &tag.block)
         end
