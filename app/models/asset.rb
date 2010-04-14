@@ -60,7 +60,7 @@ class Asset < ActiveRecord::Base
     if style_name == 'original'
       geometry = lazy_load_dimensions
     else
-      Paperclip::Geometry.parse(style_dimensions(style_name))
+      geometry = Paperclip::Geometry.from_file(asset.path(style_name.to_sym))
     end
   end
 
