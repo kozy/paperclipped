@@ -128,7 +128,7 @@ private
     if asset.dirty?
       self.original_width = nil
       self.original_height = nil
-      self.extension = nil
+      self.original_extension = nil
     end
   end
 
