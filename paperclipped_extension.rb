@@ -5,31 +5,11 @@ class PaperclippedExtension < Radiant::Extension
   description "Assets extension based on the lightweight Paperclip plugin."
   url "http://github.com/kbingman/paperclipped"
   
-  define_routes do |map|
-    
-    # Main RESTful routes for Assets
-    map.namespace :admin, :member => { :remove => :get }, :collection => { :refresh => :post } do |admin|
-      admin.resources :assets
-    end
-    
-    # Bucket routes
-    map.with_options(:controller => 'admin/assets') do |asset|
-      asset.add_bucket        "/admin/assets/:id/add",                   :action => 'add_bucket'
-      asset.clear_bucket      "/admin/assets/clear_bucket",              :action => 'clear_bucket'
-      asset.reorder_assets    '/admin/assets/reorder/:id',               :action => 'reorder'
-      asset.attach_page_asset '/admin/assets/attach/:asset/page/:page',  :action => 'attach_asset'
-      asset.remove_page_asset '/admin/assets/remove/:asset/page/:page',  :action => 'remove_asset'
-    end
-    
-    # File downloader
-    map.resources :assets, :only => :show
-  end
-  
   extension_config do |config|
-    # config.gem 'paperclip', :version => '~> 2.3', :source => 'http://gemcutter.org'
-    config.gem 'acts_as_list', :source => 'http://gemcutter.org'
-    config.gem 'will_paginate', :version => '~> 2.3.11', :source => 'http://gemcutter.org'
-    config.gem 'responds_to_parent', :source => 'http://gemcutter.org'
+    config.gem 'paperclip', :version => '~> 2.3.3'
+    config.gem 'acts_as_list'
+    config.gem 'will_paginate'
+    config.gem 'responds_to_parent'
     config.after_initialize do
       Paperclip.interpolates :no_original_style do |attachment, style|
         style ||= :original

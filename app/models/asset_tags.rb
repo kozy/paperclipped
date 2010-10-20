@@ -144,7 +144,7 @@ module AssetTags
       asset = find_asset(tag, options)
       if asset.image?
         size = options['size'] ? options.delete('size') : 'original'
-        asset.send(att, size)
+        asset.send(att, size).to_i
       else
         raise TagError, "Asset is not an image"
       end
@@ -171,7 +171,7 @@ module AssetTags
     end
     
     desc %{
-      Expands  if the asset is not an image or the image file is not #{property}.
+      Expands if the asset is not an image or the image file is not #{property}.
     }
     tag "assets:unless_#{property}" do |tag|
       options = tag.attr.dup
@@ -181,7 +181,7 @@ module AssetTags
   end
   
   desc %{
-    Returns 'vertical', 'horizontal' or 'square', provided the asset is an image.
+    Returns the size of the attached file in a readable format.
   }
   tag "assets:filesize" do |tag|
     options = tag.attr.dup

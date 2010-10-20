@@ -14,8 +14,8 @@ module AssetTypeTags
         ## tags referring to the whole asset collection
 
         desc %{
-          Loops through all the assets of type #{type}.
-          (Use r:assets:#{type.plural}:each if you want all the #{type} assets attached to the present page.)
+          Loops through all the assets of type #{type.singular}.
+          (Use r:assets:#{type.plural}:each if you want all the #{type.singular} assets attached to the present page.)
 
           *Usage:* 
           <pre><code><r:assets:all_#{type.plural}:each>...</r:assets:all_#{type.plural}:each></code></pre>
@@ -29,8 +29,8 @@ module AssetTypeTags
         end
 
         desc %{
-          Loops through all the assets **not** of type #{type}.
-          (Use r:assets:#{type.plural}:each if you want all the #{type} assets attached to the present page.)
+          Loops through all the assets **not** of type #{type.singular}.
+          (Use r:assets:#{type.plural}:each if you want all the #{type.singular} assets attached to the present page.)
 
           *Usage:* 
           <pre><code><r:assets:all_non_#{type.plural}:each>...</r:assets:all_non_#{type.plural}:each></code></pre>
@@ -46,7 +46,7 @@ module AssetTypeTags
         ## tags referring to assets attached to the present page
 
         desc %{
-          Expands if any #{type} assets are attached to the page.
+          Expands if any #{type.singular} assets are attached to the page.
           Note the pluralization: r:assets:if_image tests whether a particular asset is an image file.
           r:assets:if_images tests whether any images are present.
 
@@ -60,7 +60,7 @@ module AssetTypeTags
         end
 
         desc %{
-          Expands if no #{type} assets are attached to the page.
+          Expands if no #{type.singular} assets are attached to the page.
           Note the pluralization: r:assets:unless_image tests whether a particular asset is an image file.
           r:assets:unless_images tests whether any images are present.
 
@@ -74,7 +74,7 @@ module AssetTypeTags
         end
     
         desc %{
-          Expands if any non-#{type} assets are attached to the page.
+          Expands if any non-#{type.singular} assets are attached to the page.
           Note the pluralization: r:assets:if_non_image tests whether a particular asset is not an image file.
           r:assets:if_non_images tests whether any non-images are present.
 
@@ -88,7 +88,7 @@ module AssetTypeTags
         end
 
         desc %{
-          Expands if no non-#{type} assets are attached to the page.
+          Expands if no non-#{type.singular} assets are attached to the page.
           Note the pluralization: r:assets:unless_non_image tests whether a particular asset is not an image file.
           r:assets:unless_non_images tests whether any non-images are present.
 
@@ -102,13 +102,13 @@ module AssetTypeTags
         end
 
         desc %{
-          Loops through all the attached assets of type #{type}. The usual order attributes are applied.
+          Loops through all the attached assets of type #{type.singular}. The usual order attributes are applied.
 
           *Usage:* 
           <pre><code><r:assets:#{type.plural}:each>...</r:assets:#{type.plural}:each></code></pre>
         }
         tag "assets:#{type.plural}" do |tag|
-          raise TagError, "page must be defined for assets:#{type} tags" unless tag.locals.page
+          raise TagError, "page must be defined for assets:#{type.singular} tags" unless tag.locals.page
           tag.expand
         end
         tag "assets:#{type.plural}:each" do |tag|
@@ -117,13 +117,13 @@ module AssetTypeTags
         end
 
         desc %{
-          Loops through all the attached assets not of type #{type}. The usual order attributes are applied.
+          Loops through all the attached assets not of type #{type.singular}. The usual order attributes are applied.
 
           *Usage:* 
           <pre><code><r:assets:non_#{type.plural}:each>...</r:assets:non_#{type.plural}:each></code></pre>
         }
         tag "assets:non_#{type.plural}" do |tag|
-          raise TagError, "page must be defined for assets:non_#{type} tags" unless tag.locals.page
+          raise TagError, "page must be defined for assets:non_#{type.singular} tags" unless tag.locals.page
           tag.expand
         end
         tag "assets:#{type.plural}:each" do |tag|
@@ -132,13 +132,13 @@ module AssetTypeTags
         end
 
         desc %{
-          Displays the first attached asset of type #{type}. The usual order attributes are applied.
+          Displays the first attached asset of type #{type.singular}. The usual order attributes are applied.
 
           *Usage:* 
-          <pre><code><r:assets:first_#{type}>...</r:assets:first_#{type}></code></pre>
+          <pre><code><r:assets:first_#{type.singular}>...</r:assets:first_#{type.singular}></code></pre>
         }
-        tag "assets:first_#{type}" do |tag|
-          raise TagError, "page must be defined for assets:first_#{type} tag" unless tag.locals.page
+        tag "assets:first_#{type.singular}" do |tag|
+          raise TagError, "page must be defined for assets:first_#{type.singular} tag" unless tag.locals.page
           assets = tag.locals.page.assets.send(type.plural.intern).find(:all, asset_type_find_options(tag))
           if assets.any?
             tag.locals.asset = assets.first
@@ -152,20 +152,20 @@ module AssetTypeTags
           Renders the contained elements only if the asset is of the specified type.
 
           *Usage:* 
-          <pre><code><r:assets:if_#{type}>...</r:assets:if_#{type}></code></pre>
+          <pre><code><r:assets:if_#{type.singular}>...</r:assets:if_#{type.singular}></code></pre>
         }
-        tag "assets:if_#{type}" do |tag|
-          tag.expand if tag.locals.asset.send("#{type}?".intern)
+        tag "assets:if_#{type.singular}" do |tag|
+          tag.expand if tag.locals.asset.send("#{type.singular}?".intern)
         end
 
         desc %{
           Renders the contained elements only if the asset is not of the specified type.
 
           *Usage:* 
-          <pre><code><r:assets:unless_#{type}>...</r:assets:unless_#{type}></code></pre>
+          <pre><code><r:assets:unless_#{type.singular}>...</r:assets:unless_#{type.singular}></code></pre>
         }
-        tag "assets:unless_#{type}" do |tag|
-          tag.expand unless tag.locals.asset.send("#{type}?".intern)
+        tag "assets:unless_#{type.singular}" do |tag|
+          tag.expand unless tag.locals.asset.send("#{type.singular}?".intern)
         end
     
       end

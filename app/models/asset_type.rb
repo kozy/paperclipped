@@ -24,8 +24,12 @@ class AssetType
     @@types[@name] = self
   end
   
+  def singular
+    name.to_s
+  end
+
   def plural
-    name.to_s.pluralize
+    singular.pluralize
   end
 
   def condition
