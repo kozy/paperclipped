@@ -65,33 +65,20 @@ module AssetTags
     <pre><code><r:assets:first>...</r:assets:first></code></pre>
   }
   tag 'assets:first' do |tag|
-     attachments = tag.locals.page.page_attachments
-     if first = attachments.first
-       tag.locals.asset = first.asset
-       tag.expand
-     end
-   end
-
-   tag 'assets:second' do |tag|
-      attachments = tag.locals.page.page_attachments
-      if second = attachments[1]
-        tag.locals.asset = second.asset
-        tag.expand
-      end
+    attachments = tag.locals.page.page_attachments
+    if first = attachments.first
+      tag.locals.asset = first.asset
+      tag.expand
     end
-   
-   tag 'assets:if_first' do |tag|
-     attachments = tag.locals.assets
-     asset = tag.locals.asset
-     if asset == attachments.first.asset
+  end
+
+  tag 'assets:second' do |tag|
+     attachments = tag.locals.page.page_attachments
+     if second = attachments[1]
+       tag.locals.asset = second.asset
        tag.expand
      end
    end
-   
-   desc %{
-     Renders the contained elements only if the current contextual page has one or
-     more assets. The @min_count@ attribute specifies the minimum number of required
-     assets. You can also filter by extensions with the @extensions@ attribute.
 
   tag 'assets:if_first' do |tag|
     attachments = tag.locals.assets
