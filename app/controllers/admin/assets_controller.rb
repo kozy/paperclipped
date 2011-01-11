@@ -27,7 +27,7 @@ class Admin::AssetsController < Admin::ResourceController
       end
       respond_to do |format|
         format.html { 
-          flash[:notice] = "Asset successfully uploaded."
+          flash[:notice] = t("asset_successfully_uploaded")
           redirect_to(@page ? edit_admin_page_path(@page) : (params[:continue] ? edit_admin_asset_path(@asset) : admin_assets_path)) 
         }
         format.js {
@@ -46,7 +46,7 @@ class Admin::AssetsController < Admin::ResourceController
     else
       respond_to do |format|
         format.html { 
-          flash[:error] = "Sorry: asset could not be saved."
+          flash[:error] = t("asset_could_not_be_saved")
           render :action => 'new'
         }
       end
@@ -61,12 +61,12 @@ class Admin::AssetsController < Admin::ResourceController
       @assets.each do |asset|
         asset.asset.reprocess!
       end
-      flash[:notice] = "Thumbnails successfully refreshed."
+      flash[:notice] = t("thumbnails_successfully_refreshed")
       redirect_to admin_assets_path
     else
       @asset = Asset.find(params[:id])
       @asset.asset.reprocess!
-      flash[:notice] = "Thumbnail successfully refreshed."
+      flash[:notice] = t('thumbnail_successfully_refreshed')
       redirect_to edit_admin_asset_path(@asset)
     end
   end
@@ -90,7 +90,7 @@ class Admin::AssetsController < Admin::ResourceController
   def clear_bucket
     session[:bucket] = nil
     render :update do |page|
-      page[:bucket_list].replace_html '<li><p class="note"><em>Your bucket is empty.</em></p></li>'
+      page[:bucket_list].replace_html "<li><p class='note'><em>#{t('your_bucket_is_empty')}</em></p></li>"
     end
   end
   

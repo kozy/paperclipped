@@ -3,7 +3,7 @@
     = render :partial => 'admin/assets/asset', :locals => { :attachment => attachment }
 - else
   %li
-    %p.note You have no attached assets.
+    %p.note= t('no_attached_assets')
     
 %script{ :type => "text/javascript" }
   Asset.MakeDraggables();

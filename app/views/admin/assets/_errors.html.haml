@@ -1,5 +1,5 @@
 - if @asset.errors && !@asset.errors.empty?
   %p#asset_errors
     %strong
-      Sorry.
+      = t('sorry')
       = @asset.errors.full_messages.to_sentence

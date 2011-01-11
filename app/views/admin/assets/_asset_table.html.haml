@@ -6,11 +6,11 @@
           - thead.thumbnail_header do
             %th.asset Asset
           - thead.title_header do
-            %th.asset-title Title
+            %th.asset-title= t('title')
           - thead.content_type_header do
             %th.content_type Type
           - thead.modify_header do
-            %th.modify{ :colspan =>"2"} Modify
+            %th.modify{ :colspan =>"2"}= t('modify')
 
     %tbody
       - unless assets.empty?
@@ -32,11 +32,11 @@
                   = asset.asset_content_type
               - tbody.bucket_cell do
                 %td.add-to-bucket
-                  = link_to_remote(image_tag('assets/add-to-bucket.png', :alt => 'Add to Bucket'), :url => add_bucket_url(:id => asset))
+                  = link_to_remote(image_tag('assets/add-to-bucket.png', :alt => t('add_to_bucket')), :url => add_bucket_url(:id => asset))
               - tbody.remove_cell do
                 %td.remove
-                  = link_to 'remove', remove_admin_asset_path(asset)
+                  = link_to t('remove'), remove_admin_asset_path(asset)
       - else
         %tr
           %td.note{ :colspan => "5" } 
-            No Assets
+            = t('no_assets')

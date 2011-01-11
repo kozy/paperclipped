@@ -9,13 +9,12 @@
 - render_region :bottom do |bottom|
   - bottom.regenerate do
     - if current_user.admin?
-      %p 
-        You can regenerate all thumbnails here. Beware that this will take a while and consume considerable resources on your server. 
+      %p= t('regenerate_thumbnails_description')
       - form_tag refresh_admin_assets_path do
-        %input.button{ :type => "submit", :value => "Regenerate" }
+        %input.button{ :type => "submit", :value => t('regenerate') }
 
   - bottom.buttons do
     #actions
       = pagination_for @assets
       %ul
-        %li= link_to image('plus') + " " + "new asset", new_admin_asset_path
+        %li= link_to image('plus') + " " + t('new_asset'), new_admin_asset_path
