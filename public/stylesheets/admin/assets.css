@@ -20,14 +20,16 @@ table td.content_type { width: 120px; color: #9eb3bf; font-style: italic; font-w
 table td.add-to-bucket { width: 90px;}
 
 #assets { clear: both; position: relative; margin-bottom: 4px; padding: 0; cursor: default;
-  border: solid #cdc295; border-width: 0 1px 1px 1px; min-height: 150px; height: auto !important; height: 150px; background: white; }
+  border: solid #aaa; border-width: 0 1px 1px 1px; min-height: 150px; height: auto !important; height: 150px; background: white; }
 
 #asset-bucket { width: 70%; border: 5px solid #c0c0c0; background: white; padding: 20px; cursor: move; }
+
+#asset-bucket #search-assets label.note {color: #333;}
 #close-link { margin-top: 10px; }
    
 #assets h4 { font-size: 100%; font-weight: bold; margin: 0; } 
 #assets .note { font-size: 85%; font-weight: normal; color: black; }
-#assets p { padding: 0 10px 7px; background: #eae3c5; margin: 0; height: 20px; line-height: 22px; }
+#assets p { padding: 0 10px 7px; background: #ccc; margin: 0; height: 20px; line-height: 22px; }
 
 #assets p.note { margin: 5px 0; font-size: 85%; font-style: italic;  background: #fff;}
 
@@ -38,13 +40,13 @@ table td.add-to-bucket { width: 90px;}
    
 #assets .pane {  }
 
-#asset-tabs { margin: 0; border-bottom: 1px solid #cdc295;  }
-#asset-tabs .asset-tab { background-color: #f5f1e2; border: 1px solid #f5f1e2; border-bottom: 1px solid #cdc295;
+#asset-tabs { margin: 0; border-bottom: 1px solid #aaa;  }
+#asset-tabs .asset-tab { background-color: #ddd; border: 1px solid #ddd; border-bottom: 1px solid #aaa;
   color: black; display: inline-block; font-size: 100%; font-weight: bold; text-align: left; margin: 0 0 -1px 0;
   padding: 7px 10px 4px; text-decoration: none; text-transform: titlecase; outline: none; -moz-outline: none;
 }
 
-#asset-tabs .asset-tab.here { background-color: #eae3c5; border: 1px solid #cdc295; border-bottom: 1px solid #eae3c5; }
+#asset-tabs .asset-tab.here { background-color: #ccc; border: 1px solid #aaa; border-bottom: 1px solid #ccc; }
 
 
 #bucket ul, #page-attachments ul, #search-results ul { list-style: none; margin: 0; padding: 0 10px 0 0;}
@@ -65,10 +67,10 @@ table td.add-to-bucket { width: 90px;}
 #assets .info  a:hover { color: blue; text-decoration: underline; }
 #assets .image_info h4 { margin: 0 0 10px 0; padding: 0; background: none; }
  
-#content .form-area p.upload { margin: 2px 0 10px 0; padding: 10px 10px; background: white; border: 1px solid #cdc295; }
-#content .form-area div.asset { margin: 2px 0; padding: 10px; background: white; border: 1px solid #cdc295; }
+#content .form-area p.upload { margin: 2px 0 10px 0; padding: 10px 10px; background: white; border: 1px solid #aaa; }
+#content .form-area div.asset { margin: 2px 0; padding: 10px; background: white; border: 1px solid #aaa; }
 #content p.content label.filename { margin-bottom: -5px; display: block; }
-#content .form-area p.upload  label { margin-bottom: 5px; display: block; }
+#content .form-area p.upload  label { margin-bottom: 5px; display: block; color: #333;}
 p#asset-name { padding-top: 8px; font-size: 80%; }
 p.info { font-size: 85%; }
 
