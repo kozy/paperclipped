@@ -1,0 +1,51 @@
+--- 
+nl: 
+  asset_could_not_be_saved: kon asset niet opslaan
+  asset_successfully_uploaded: Asset sucesvol geupload.
+  sorry_asset_could_not_be: "Het spijt me: kon asset niet opslaan."
+  thumbnail_successfully_refreshed: Thumbnail succesvol ververst.
+  thumbnails_successfully_refreshed: Thumbnails succesvol ververst.
+  your_bucket_is_empty: Uw emmer is leeg
+  
+  add_to_bucket: Aan Emmer Toevoegen
+  modify: Aanpassen
+  no_assets: Geen Assets
+  remove: verwijder
+  caption: Onderschrift
+  close: sluit
+  bucket: Emmer
+  search: Zoek
+  attach_to_page: Aan pagina aanhechten
+  sorry: Het spijt me.
+  less: Minder
+  more: Meer
+  sorry_there_were_problems: "Het spijt me, er zijn problemen:"
+  title: Titel
+  there_were_no_assets_found: Er waren geen assets gevonden
+  filename: "Bestandsnaanm:"
+  show_assets_bucket: Emmer weergeven
+  save_and_upload: Bewaar en Upload
+  add_asset_to_bucket: Asset aan emmer toevoegen
+  cancel: Annuleren
+  regenerate: Verversen
+  choose_a_file_to_upload: Kies een bestand om te uploaden
+  new_asset: Nieuw Asset
+  remove_asset: Asset verwijderen
+  attached_assets: Aangehechte Assets
+  attached_assets_description: |-
+    Aangehechte Assets. Deze kunt u plaasten door ze te slepen 
+    of met de <code>&lt;r:assets:each /&gt;</code> tag.
+  bucket: Emmer
+  bucket_description: De emmer dient als tijdelijke opslag voor uw bestanden. U kunt deze gebruiken om bestanden te plaatsen in uw pagina's.
+  clear_bucket: Emmer Legen
+  search_for_assets: Zoek naar assets
+  upload: Uploaden
+  uploaded_assets_description: Assets die u hier upload worden automatisch geassocieerd met de pagina.
+  edit_asset_title: %{asset_title} aanpassen
+  no_attached_assets: U heeft geen aangehechte assets.
+  edit_asset: Asset Aanpassen
+  new_asset: Nieuwe Asset
+  regenerate: Verversen
+  regenerate_thumbnails_description: U kunt uw assets hier verversen. Denk erom dat dit een tijdje duurt en de server zwaar belast.
+  choose_asset_description: "Kies een asset om hier te uploaden. Als het <code>Titel</code> veld leeg gelaten wordt zal de bestandsnaam (zonder extensie) automatisch gebruikt worden. \n      Door te klikken op <code>Meer</code>, kunt u onderschrift toevoegen. "
+  confirm_deletion: "Weet u zeker dat u dit bestand \n  %strong.warning permanent\n  wilt verwijderen?"

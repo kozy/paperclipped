@@ -1,0 +1,51 @@
+--- 
+en: 
+  asset_could_not_be_saved: asset could not be saved
+  asset_successfully_uploaded: Asset successfully uploaded.
+  sorry_asset_could_not_be: "Sorry: asset could not be saved."
+  thumbnail_successfully_refreshed: Thumbnail successfully refreshed.
+  thumbnails_successfully_refreshed: Thumbnails successfully refreshed.
+  your_bucket_is_empty: Your bucket is empty.
+  
+  add_to_bucket: Add to Bucket
+  modify: Modify
+  no_assets: No Assets
+  remove: remove
+  title: Title
+  caption: Caption
+  close: Close
+  bucket: Bucket
+  search: Search
+  attach_to_page: Attach to page
+  sorry: Sorry.
+  less: Less
+  more: More
+  sorry_there_were_problems: "Sorry: there were problems:"
+  there_were_no_assets_found: There were no assets found
+  filename: "Filename:"
+  show_assets_bucket: Show Assets Bucket
+  save_and_upload: Save and Upload
+  add_asset_to_bucket: Add asset to Bucket
+  cancel: Cancel
+  regenerate: Regenerate
+  choose_a_file_to_upload: Choose a file to upload
+  new_asset: New Asset
+  remove_asset: Remove Asset
+  attached_assets: Attached Assets
+  attached_assets_description: |-
+    Attached assets. These can be inserted with drag and drop 
+                    or shown with the <code>&lt;r:assets:each /&gt;</code> tag.
+  bucket: Bucket
+  bucket_description: The Bucket provides temporary storage for your items. You can use it to place items in your pages or snippets.
+  clear_bucket: Clear Bucket
+  search_for_assets: Search for assets
+  upload: Upload
+  uploaded_assets_description: Assets uploaded here will be automatically associated with this page.
+  edit_asset_title: Edit %{asset_title}
+  no_attached_assets: You have no attached assets.
+  edit_asset: Edit Asset
+  new_asset: new asset
+  regenerate: Regenerate
+  regenerate_thumbnails_description: You can regenerate all thumbnails here. Beware that this will take a while and consume considerable resources on your server.
+  choose_asset_description: "Choose an asset to upload here. If the <code>Title</code> field is left blank, the filename (without the file type) will be automatically added. \n      By clicking on <code>More</code>, you can add a caption as well. "
+  confirm_deletion: "  Are you sure you want to  \n  %strong.warning permanently remove\n  the following asset?"
